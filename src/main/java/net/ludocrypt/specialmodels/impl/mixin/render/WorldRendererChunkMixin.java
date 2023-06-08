@@ -127,12 +127,12 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	@Unique
 	private double lastSpecialCameraYaw = Double.MIN_VALUE;
 
-	@Inject(method = "setWorld", at = @At("TAIL"))
+	@Inject(method = "setWorld", at = @At("HEAD"))
 	private void specialModels$setWorld(ClientWorld world, CallbackInfo ci) {
 		this.setWorldSpecial(world);
 	}
 
-	@Inject(method = "reload", at = @At("TAIL"))
+	@Inject(method = "reload", at = @At("HEAD"))
 	private void specialModels$reload(CallbackInfo ci) {
 		this.reloadSpecial();
 	}
@@ -202,6 +202,8 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 			this.specialChunkBuilder = null;
 			this.renderableSpecialChunks.set(null);
 			this.specialChunkInfoList.clear();
+		} else {
+			this.reloadSpecial();
 		}
 	}
 
@@ -236,6 +238,10 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 
 			this.renderableSpecialChunks.set(new SpecialChunkBuilder.RenderableChunks(this.specialChunks.chunks.length));
 			this.specialChunkInfoList.clear();
+			Entity entity = this.client.getCameraEntity();
+			if (entity != null) {
+				this.specialChunks.updateCameraPosition(entity.getX(), entity.getZ());
+			}
 		}
 	}
 
