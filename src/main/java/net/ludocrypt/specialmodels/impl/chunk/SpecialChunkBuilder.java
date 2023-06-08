@@ -274,7 +274,7 @@ public class SpecialChunkBuilder {
 		private boolean needsImportantRebuild;
 
 		private final Map<SpecialModelRenderer, VertexBuffer> specialModelBuffers = SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries().stream()
-				.collect(Collectors.toMap(entry -> entry.getValue(), entry -> new VertexBuffer()));
+				.collect(Collectors.toMap(entry -> entry.getValue(), entry -> new VertexBuffer(VertexBuffer.Usage.STATIC)));
 
 		public VertexBuffer getBuffer(SpecialModelRenderer modelRenderer) {
 			return specialModelBuffers.get(modelRenderer);

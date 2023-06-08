@@ -45,12 +45,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ThreadedChunkManager;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.chunk.light.LightingProvider;
 
 @Mixin(WorldRenderer.class)
 public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
@@ -486,14 +486,15 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	@Override
 	public void findSpecialChunksToRebuild(Camera camera) {
 		this.client.getProfiler().push("populate_chunks_to_compile");
+		LightingProvider lightingProvider = this.world.getLightingProvider();
 		ChunkRenderRegionCache chunkRenderRegionCache = new ChunkRenderRegionCache();
 		BlockPos blockPos = camera.getBlockPos();
 		List<SpecialChunkBuilder.BuiltChunk> list = Lists.<SpecialChunkBuilder.BuiltChunk>newArrayList();
 
 		for (SpecialChunkBuilder.ChunkInfo chunkInfo : this.specialChunkInfoList) {
 			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
-			ChunkPos chunkPos = new ChunkPos(builtChunk.getOrigin());
-			if (builtChunk.needsRebuild() && this.world.getChunk(chunkPos.x, chunkPos.z).isClientLightReady()) {
+			ChunkSectionPos chunkSectionPos = ChunkSectionPos.from(builtChunk.getOrigin());
+			if (builtChunk.needsRebuild() && lightingProvider.isLightingEnabled(chunkSectionPos)) {
 				boolean bl = false;
 				if (this.client.options.getPrioritizeChunkUpdates().get() == ChunkUpdatesPrioritization.NEARBY) {
 					BlockPos blockPos2 = builtChunk.getOrigin().add(8, 8, 8);

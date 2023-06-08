@@ -1,16 +1,9 @@
 [versions]
-minecraft = "1.19.4"
-quilt_mappings = "1.19.4+build.10"
+minecraft = "1.20"
+quilt_mappings = "1.20+build.1"
 quilt_loader = "0.18.10"
 
-quilted_fabric_api = "6.0.0-beta.9+0.83.0-1.19.4"
-
-modrinth_iris = "1.6.3+1.19.4"
-modrinth_sodium = "mc1.19.4-0.4.10"
-modrinth_indium = "1.0.18+mc1.19.4"
-joml_joml = "1.10.4"
-anarres_jcpp = "1.4.14"
-douira_glsltransformer = "1.0.1"
+quilted_fabric_api = "7.0.0+0.83.0-1.20"
 
 [libraries]
 minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
@@ -19,14 +12,6 @@ quilt_loader = { module = "org.quiltmc:quilt-loader", version.ref = "quilt_loade
 
 quilted_fabric_api = { module = "org.quiltmc.quilted-fabric-api:quilted-fabric-api", version.ref = "quilted_fabric_api" }
 quilted_fabric_api_deprecated = { module = "org.quiltmc.quilted-fabric-api:quilted-fabric-api-deprecated", version.ref = "quilted_fabric_api" }
-
-modrinth_iris = { module = "maven.modrinth:iris", version.ref = "modrinth_iris" }
-modrinth_sodium = { module = "maven.modrinth:sodium", version.ref = "modrinth_sodium" }
-modrinth_indium = { module = "maven.modrinth:indium", version.ref = "modrinth_indium" }
-
-joml_joml = { module = "org.joml:joml", version.ref = "joml_joml" }
-anarres_jcpp = { module = "org.anarres:jcpp", version.ref = "anarres_jcpp" }
-douira_glsltransformer = { module = "io.github.douira:glsl-transformer", version.ref = "douira_glsltransformer" }
 
 [bundles]
 quilted_fabric_api = ["quilted_fabric_api", "quilted_fabric_api_deprecated"]

@@ -61,7 +61,7 @@ public abstract class WorldRendererBeforeMixin implements WorldRendererAccess, W
 		if (this.shouldCaptureFrustum) {
 			Matrix4f matrix4f2 = matrices.peek().getModel();
 			Vec3d vec3d = camera.getPos();
-			this.method_3275(matrix4f2, positionMatrix, vec3d.x, vec3d.y, vec3d.z, this.capturedFrustum != null ? new Frustum(matrix4f2, positionMatrix) : frustum);
+			this.captureFrustum(matrix4f2, positionMatrix, vec3d.x, vec3d.y, vec3d.z, this.capturedFrustum != null ? new Frustum(matrix4f2, positionMatrix) : frustum);
 			this.shouldCaptureFrustum = false;
 		}
 
@@ -72,6 +72,6 @@ public abstract class WorldRendererBeforeMixin implements WorldRendererAccess, W
 	}
 
 	@Shadow
-	abstract void method_3275(Matrix4f matrix4f, Matrix4f matrix4f2, double d, double e, double f, Frustum frustum);
+	abstract void captureFrustum(Matrix4f matrix4f, Matrix4f matrix4f2, double d, double e, double f, Frustum frustum);
 
 }

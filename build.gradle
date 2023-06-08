@@ -11,34 +11,11 @@ loom {
 	accessWidenerPath = file("src/main/resources/specialmodels.accesswidener")
 }
 
-repositories {
-	mavenCentral()
-	maven {
-		url 'https://ladysnake.jfrog.io/artifactory/mods'
-    }
-	maven {
-		url 'https://api.modrinth.com/maven'
-		content {
-			includeGroup "maven.modrinth"
-		}
-    }
-	maven {
-		url "https://jitpack.io"
-	}
-}
-
 dependencies {
 	minecraft libs.minecraft
 	mappings variantOf(libs.quilt.mappings) { classifier 'intermediary-v2' }
 	modImplementation libs.quilt.loader
 	modImplementation libs.quilted.fabric.api
-//	modImplementation libs.modrinth.iris
-//	modImplementation libs.modrinth.sodium
-//	modImplementation libs.modrinth.indium
-//
-//	modImplementation libs.joml.joml
-//	modImplementation libs.anarres.jcpp
-//	modImplementation libs.douira.glsltransformer
 }
 
 processResources {

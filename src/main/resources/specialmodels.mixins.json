@@ -10,8 +10,6 @@
 		"model.JsonUnbakedModelMixin",
 		"model.MultipartBakedModelMixin",
 		"registry.RegistriesAccessor",
-		"render.gui.GameRendererAccessor",
-		"render.gui.GameRendererAccessorTwo",
 		"render.GameRendererMixin",
 		"render.VertexBufferAccessor",
 		"render.WorldRendererAfterMixin",
