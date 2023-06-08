@@ -127,12 +127,12 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	@Unique
 	private double lastSpecialCameraYaw = Double.MIN_VALUE;
 
-	@Inject(method = "setWorld", at = @At("HEAD"))
+	@Inject(method = "setWorld", at = @At("TAIL"))
 	private void specialModels$setWorld(ClientWorld world, CallbackInfo ci) {
 		this.setWorldSpecial(world);
 	}
 
-	@Inject(method = "reload", at = @At("HEAD"))
+	@Inject(method = "reload", at = @At("TAIL"))
 	private void specialModels$reload(CallbackInfo ci) {
 		this.reloadSpecial();
 	}
