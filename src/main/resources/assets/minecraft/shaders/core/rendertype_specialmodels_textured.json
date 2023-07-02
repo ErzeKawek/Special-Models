@@ -160,14 +160,6 @@
 			"values": [
 				0
 			]
-		},
-		{
-			"name": "renderAsEntity",
-			"type": "float",
-			"count": 1,
-			"values": [
-				0.0
-			]
 		}
 	]
 }

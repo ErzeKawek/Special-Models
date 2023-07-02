@@ -1,5 +1,7 @@
 package net.ludocrypt.specialmodels.impl.chunk;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.system.MemoryStack;
 import org.quiltmc.loader.api.minecraft.ClientOnly;
 import org.slf4j.Logger;
 
@@ -31,9 +34,12 @@ import com.mojang.logging.LogUtils;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
+import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.access.BakedModelAccess;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
+import net.ludocrypt.specialmodels.impl.render.MutableQuad;
+import net.ludocrypt.specialmodels.impl.render.MutableVertice;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -48,8 +54,10 @@ import net.minecraft.client.render.chunk.ChunkOcclusionDataBuilder;
 import net.minecraft.client.render.chunk.ChunkRenderRegion;
 import net.minecraft.client.render.chunk.ChunkRenderRegionCache;
 import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.data.client.model.BlockStateVariantMap.QuadFunction;
 import net.minecraft.util.Util;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
@@ -496,7 +504,6 @@ public class SpecialChunkBuilder {
 
 							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) blockRenderManager.getModel(state)).getModels(state);
 							if (!models.isEmpty()) {
-
 								for (Pair<SpecialModelRenderer, BakedModel> pair : models) {
 									SpecialModelRenderer modelRenderer = pair.getFirst();
 									BakedModel model = pair.getSecond();
@@ -508,8 +515,12 @@ public class SpecialChunkBuilder {
 										buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
 									}
 
-									blockRenderManager.getModelRenderer().render(chunkRenderRegion, model, state, pos, matrixStack, buffer, true, randomGenerator, modelSeed,
+									ReconstructableModel constructedModel = new ReconstructableModel(model);
+									constructedModel.setFunction((quads, blockState, direction, random) -> quads.stream().map((quad) -> reconstructBakedQuad(quad, modelRenderer)).toList());
+
+									blockRenderManager.getModelRenderer().render(chunkRenderRegion, constructedModel, state, pos, matrixStack, buffer, true, randomGenerator, modelSeed,
 											OverlayTexture.DEFAULT_UV);
+
 								}
 							}
 
@@ -535,6 +546,111 @@ public class SpecialChunkBuilder {
 				return renderedChunkData;
 			}
 
+			private BakedQuad reconstructBakedQuad(BakedQuad quad, SpecialModelRenderer modelRenderer) {
+				int[] vertexData = quad.getVertexData();
+				int vertexDataLength = 8;
+
+				try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+					ByteBuffer byteBuffer = memoryStack.malloc(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSize());
+					IntBuffer intBuffer = byteBuffer.asIntBuffer();
+
+					int[] reconstructed = new int[vertexData.length];
+
+					int uvIndex = 0;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+
+					float x1 = byteBuffer.getFloat(0);
+					float y1 = byteBuffer.getFloat(4);
+					float z1 = byteBuffer.getFloat(8);
+
+					float u1 = byteBuffer.getFloat(16);
+					float v1 = byteBuffer.getFloat(20);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+
+					float x2 = byteBuffer.getFloat(0);
+					float y2 = byteBuffer.getFloat(4);
+					float z2 = byteBuffer.getFloat(8);
+
+					float u2 = byteBuffer.getFloat(16);
+					float v2 = byteBuffer.getFloat(20);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+
+					float x3 = byteBuffer.getFloat(0);
+					float y3 = byteBuffer.getFloat(4);
+					float z3 = byteBuffer.getFloat(8);
+
+					float u3 = byteBuffer.getFloat(16);
+					float v3 = byteBuffer.getFloat(20);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+
+					float x4 = byteBuffer.getFloat(0);
+					float y4 = byteBuffer.getFloat(4);
+					float z4 = byteBuffer.getFloat(8);
+
+					float u4 = byteBuffer.getFloat(16);
+					float v4 = byteBuffer.getFloat(20);
+
+					MutableQuad mutableQuad = modelRenderer.modifyQuad(new MutableQuad(new MutableVertice(x1, y1, z1, u1, v1), new MutableVertice(x2, y2, z2, u2, v2),
+							new MutableVertice(x3, y3, z3, u3, v3), new MutableVertice(x4, y4, z4, u4, v4)));
+
+					uvIndex = 0;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+					byteBuffer.putFloat(0, (float) mutableQuad.getV1().getPos().x);
+					byteBuffer.putFloat(4, (float) mutableQuad.getV1().getPos().y);
+					byteBuffer.putFloat(8, (float) mutableQuad.getV1().getPos().z);
+					byteBuffer.putFloat(16, mutableQuad.getV1().getUv().x);
+					byteBuffer.putFloat(20, mutableQuad.getV1().getUv().y);
+					intBuffer.position(0);
+					intBuffer.get(reconstructed, uvIndex, vertexDataLength);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+					byteBuffer.putFloat(0, (float) mutableQuad.getV2().getPos().x);
+					byteBuffer.putFloat(4, (float) mutableQuad.getV2().getPos().y);
+					byteBuffer.putFloat(8, (float) mutableQuad.getV2().getPos().z);
+					byteBuffer.putFloat(16, mutableQuad.getV2().getUv().x);
+					byteBuffer.putFloat(20, mutableQuad.getV2().getUv().y);
+					intBuffer.position(0);
+					intBuffer.get(reconstructed, uvIndex, vertexDataLength);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+					byteBuffer.putFloat(0, (float) mutableQuad.getV3().getPos().x);
+					byteBuffer.putFloat(4, (float) mutableQuad.getV3().getPos().y);
+					byteBuffer.putFloat(8, (float) mutableQuad.getV3().getPos().z);
+					byteBuffer.putFloat(16, mutableQuad.getV3().getUv().x);
+					byteBuffer.putFloat(20, mutableQuad.getV3().getUv().y);
+					intBuffer.position(0);
+					intBuffer.get(reconstructed, uvIndex, vertexDataLength);
+
+					uvIndex += vertexDataLength;
+					intBuffer.clear();
+					intBuffer.put(vertexData, uvIndex, vertexDataLength);
+					byteBuffer.putFloat(0, (float) mutableQuad.getV4().getPos().x);
+					byteBuffer.putFloat(4, (float) mutableQuad.getV4().getPos().y);
+					byteBuffer.putFloat(8, (float) mutableQuad.getV4().getPos().z);
+					byteBuffer.putFloat(16, mutableQuad.getV4().getUv().x);
+					byteBuffer.putFloat(20, mutableQuad.getV4().getUv().y);
+					intBuffer.position(0);
+					intBuffer.get(reconstructed, uvIndex, vertexDataLength);
+
+					return new BakedQuad(reconstructed, quad.getColorIndex(), quad.getFace(), quad.getSprite(), quad.hasShade());
+				}
+			}
+
 			@Override
 			public void cancel() {
 				this.region = null;
@@ -551,6 +667,25 @@ public class SpecialChunkBuilder {
 
 				RenderedChunkData() {
 				}
+			}
+
+			public static final class ReconstructableModel extends ForwardingBakedModel {
+
+				private QuadFunction<List<BakedQuad>, BlockState, Direction, RandomGenerator, List<BakedQuad>> function;
+
+				public ReconstructableModel(BakedModel model) {
+					this.wrapped = model;
+				}
+
+				public void setFunction(QuadFunction<List<BakedQuad>, BlockState, Direction, RandomGenerator, List<BakedQuad>> function) {
+					this.function = function;
+				}
+
+				@Override
+				public List<BakedQuad> getQuads(BlockState blockState, Direction face, RandomGenerator rand) {
+					return function.apply(super.getQuads(blockState, face, rand), blockState, face, rand);
+				}
+
 			}
 		}
 

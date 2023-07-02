@@ -4,6 +4,7 @@ import org.quiltmc.loader.api.minecraft.ClientOnly;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import net.ludocrypt.specialmodels.impl.render.MutableQuad;
 import net.minecraft.client.render.ShaderProgram;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
@@ -16,8 +17,14 @@ public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 
 	@Override
 	@ClientOnly
-	public void setup(MatrixStack matrices, ShaderProgram shader) {
+	public void setup(MatrixStack matrices, float tickDelta, ShaderProgram shader) {
 		RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
+	}
+
+	@Override
+	@ClientOnly
+	public MutableQuad modifyQuad(MutableQuad quad) {
+		return quad;
 	}
 
 	public static void init() {

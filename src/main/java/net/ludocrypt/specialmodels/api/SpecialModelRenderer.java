@@ -5,6 +5,7 @@ import org.quiltmc.loader.api.minecraft.ClientOnly;
 import com.mojang.serialization.Lifecycle;
 
 import net.ludocrypt.specialmodels.impl.mixin.registry.RegistriesAccessor;
+import net.ludocrypt.specialmodels.impl.render.MutableQuad;
 import net.minecraft.client.render.ShaderProgram;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
@@ -18,6 +19,9 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	@ClientOnly
-	public abstract void setup(MatrixStack matrices, ShaderProgram shader);
+	public abstract void setup(MatrixStack matrices, float tickDelta, ShaderProgram shader);
+
+	@ClientOnly
+	public abstract MutableQuad modifyQuad(MutableQuad quad);
 
 }

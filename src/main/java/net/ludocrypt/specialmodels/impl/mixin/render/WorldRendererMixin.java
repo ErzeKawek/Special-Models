@@ -48,12 +48,13 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 		while (chunkInfos.hasPrevious()) {
 			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
 			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
-			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> specialModels$renderBuffer(matrices, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin()));
+			builtChunk.getSpecialModelBuffers()
+					.forEach((modelRenderer, vertexBuffer) -> specialModels$renderBuffer(matrices, tickDelta, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin()));
 		}
 	}
 
 	@Unique
-	public void specialModels$renderBuffer(MatrixStack matrices, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
+	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
 			RenderSystem.depthMask(true);
@@ -68,7 +69,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 
 			vertexBuffer.bind();
 
-			modelRenderer.setup(matrices, shader);
+			modelRenderer.setup(matrices, tickDelta, shader);
 			if (origin != null) {
 				if (shader.chunkOffset != null) {
 					BlockPos blockPos = origin;
