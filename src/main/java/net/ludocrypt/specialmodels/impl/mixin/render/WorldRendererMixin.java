@@ -81,11 +81,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 				}
 			}
 
-			if (shader.getUniform("renderAsEntity") != null) {
-				shader.getUniform("renderAsEntity").setFloat(0.0F);
-			}
-
-			vertexBuffer.draw(matrices.peek().getModel(), positionMatrix, shader);
+			vertexBuffer.draw(RenderSystem.getModelViewMatrix(), positionMatrix, shader);
 
 			VertexBuffer.unbind();
 
