@@ -81,7 +81,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 				}
 			}
 
-			vertexBuffer.draw(RenderSystem.getModelViewMatrix(), positionMatrix, shader);
+			vertexBuffer.draw(matrices.peek().getModel(), positionMatrix, shader);
 
 			VertexBuffer.unbind();
 
