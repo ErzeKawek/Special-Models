@@ -23,7 +23,9 @@ public abstract class SpecialModelRenderer {
 	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader);
 
 	@ClientOnly
-	public abstract MutableQuad modifyQuad(MutableQuad quad);
+	public MutableQuad modifyQuad(MutableQuad quad) {
+		return quad;
+	}
 
 	@ClientOnly
 	public Matrix4f positionMatrix(Matrix4f in) {
