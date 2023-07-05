@@ -69,7 +69,10 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 
 			vertexBuffer.bind();
 
-			modelRenderer.setup(matrices, tickDelta, shader);
+			Matrix4f viewMatrix = modelRenderer.viewMatrix(new Matrix4f(matrices.peek().getModel()));
+			Matrix4f projectionMatrix = modelRenderer.positionMatrix(new Matrix4f(positionMatrix));
+
+			modelRenderer.setup(matrices, new Matrix4f(viewMatrix), new Matrix4f(projectionMatrix), tickDelta, shader);
 			if (origin != null) {
 				if (shader.chunkOffset != null) {
 					BlockPos blockPos = origin;
@@ -81,7 +84,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 				}
 			}
 
-			vertexBuffer.draw(matrices.peek().getModel(), positionMatrix, shader);
+			vertexBuffer.draw(viewMatrix, projectionMatrix, shader);
 
 			VertexBuffer.unbind();
 
