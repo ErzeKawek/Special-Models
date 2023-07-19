@@ -38,7 +38,6 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.chunk.ChunkBuilder;
 import net.minecraft.client.render.chunk.ChunkRenderRegionCache;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
@@ -68,10 +67,6 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	@Shadow
 	@Final
 	private static double CEIL_CUBEROOT_3_TIMES_16;
-
-	@Shadow
-	@Final
-	private BlockingQueue<ChunkBuilder.BuiltChunk> recentlyCompiledChunks;
 
 	@Unique
 	private SpecialChunkBuilder specialChunkBuilder;
@@ -132,7 +127,7 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 		this.setWorldSpecial(world);
 	}
 
-	@Inject(method = "reload", at = @At("TAIL"))
+	@Inject(method = "Lnet/minecraft/client/render/WorldRenderer;reload()V", at = @At("HEAD"))
 	private void specialModels$reload(CallbackInfo ci) {
 		this.reloadSpecial();
 	}
@@ -248,7 +243,7 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	@Override
 	public void setupSpecialTerrain(Camera camera, Frustum frustum, boolean hasForcedFrustum, boolean spectator) {
 		Vec3d vec3d = camera.getPos();
-		if (this.client.options.getEffectiveViewDistance() != this.viewDistance || this.specialChunkBuilder == null) {
+		if (this.client.options.getEffectiveViewDistance() != this.viewDistance) {
 			this.reloadSpecial();
 		}
 
