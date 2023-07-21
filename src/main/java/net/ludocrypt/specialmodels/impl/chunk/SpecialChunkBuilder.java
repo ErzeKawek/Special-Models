@@ -837,7 +837,7 @@ public class SpecialChunkBuilder {
 		}
 
 		public boolean isEmpty(SpecialModelRenderer layer) {
-			return this.renderedBuffers.get(layer).isEmpty();
+			return !this.renderedBuffers.containsKey(layer) || (this.renderedBuffers.containsKey(layer) && this.renderedBuffers.get(layer).isEmpty());
 		}
 
 		public boolean isVisibleThrough(Direction from, Direction to) {
