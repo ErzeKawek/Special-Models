@@ -75,7 +75,7 @@ public class SpecialBuiltChunkStorage {
 				for (int s = 0; s < this.sizeY; ++s) {
 					int t = this.world.getBottomY() + s * 16;
 					SpecialChunkBuilder.BuiltChunk builtChunk = this.chunks[this.getChunkIndex(k, s, o)];
-					BlockPos blockPos = builtChunk.getOrigin();
+					BlockPos blockPos = builtChunk.getOrigin().toImmutable();
 					if (n != blockPos.getX() || t != blockPos.getY() || r != blockPos.getZ()) {
 						builtChunk.setOrigin(n, t, r);
 					}

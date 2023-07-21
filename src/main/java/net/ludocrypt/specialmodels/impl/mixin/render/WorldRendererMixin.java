@@ -43,23 +43,25 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 
 	@Override
 	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera) {
+
+		SpecialModelRenderer.SPECIAL_MODEL_RENDERER.forEach((modelRenderer) -> this.sortLayer(camera.getPos().getX(), camera.getPos().getY(), camera.getPos().getZ(), modelRenderer));
+
 		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this.getSpecialChunkInfoList().listIterator(this.getSpecialChunkInfoList().size());
 
 		while (chunkInfos.hasPrevious()) {
 			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
 			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
-			builtChunk.getSpecialModelBuffers()
-					.forEach((modelRenderer, vertexBuffer) -> specialModels$renderBuffer(matrices, tickDelta, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable()));
+			builtChunk.getSpecialModelBuffers().forEach(
+					(modelRenderer, vertexBuffer) -> specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable()));
 		}
 
 	}
 
 	@Unique
-	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
+	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer,
+			BlockPos origin) {
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
-			this.client.getProfiler().pop();
-
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();
@@ -79,7 +81,6 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			if (origin != null) {
 				if (shader.chunkOffset != null) {
 					BlockPos blockPos = origin;
-					Camera camera = client.gameRenderer.getCamera();
 					float vx = (float) (blockPos.getX() - camera.getPos().getX());
 					float vy = (float) (blockPos.getY() - camera.getPos().getY());
 					float vz = (float) (blockPos.getZ() - camera.getPos().getZ());

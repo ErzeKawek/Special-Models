@@ -6,8 +6,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -29,10 +29,10 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormats;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
 
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
@@ -58,6 +58,7 @@ import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.data.client.model.BlockStateVariantMap.QuadFunction;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Util;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
@@ -90,7 +91,7 @@ public class SpecialChunkBuilder {
 	public SpecialChunkBuilder(ClientWorld world, WorldRenderer worldRenderer, Executor executor, boolean useMaxThreads, SpecialBufferBuilderStorage buffers) {
 		this.world = world;
 		this.worldRenderer = worldRenderer;
-		int i = Math.max(1, (int) ((double) Runtime.getRuntime().maxMemory() * 0.3) / (RenderLayer.getBlockLayers().stream().mapToInt(RenderLayer::getExpectedBufferSize).sum() * 4) - 1);
+		int i = Math.max(1, (int) ((double) Runtime.getRuntime().maxMemory() * 0.3) / (RenderLayer.getSolid().getExpectedBufferSize() * SpecialModelRenderer.SPECIAL_MODEL_RENDERER.size() * 4) - 1);
 		int j = Runtime.getRuntime().availableProcessors();
 		int k = useMaxThreads ? j : Math.min(j, 4);
 		int l = Math.max(1, Math.min(k, i));
@@ -270,7 +271,8 @@ public class SpecialChunkBuilder {
 		final AtomicInteger cancelledInitialBuilds = new AtomicInteger(0);
 		@Nullable
 		private SpecialChunkBuilder.BuiltChunk.RebuildTask rebuildTask;
-
+		@Nullable
+		private SpecialChunkBuilder.BuiltChunk.SortTask sortTask;
 		private Box boundingBox;
 		private boolean needsRebuild = true;
 		final BlockPos.Mutable origin = new BlockPos.Mutable(-1, -1, -1);
@@ -378,12 +380,34 @@ public class SpecialChunkBuilder {
 			return this.neighborPositions[direction.ordinal()];
 		}
 
+		public boolean scheduleSort(SpecialModelRenderer renderer, SpecialChunkBuilder chunkRenderer) {
+			SpecialChunkBuilder.ChunkData chunkData = this.getData();
+			if (this.sortTask != null) {
+				this.sortTask.cancel();
+			}
+
+			if (!chunkData.renderedBuffers.containsKey(renderer)) {
+				return false;
+			} else if (chunkData.renderedBuffers.get(renderer).isEmpty()) {
+				return false;
+			} else {
+				this.sortTask = new SpecialChunkBuilder.BuiltChunk.SortTask(this.getSquaredCameraDistance(), chunkData);
+				chunkRenderer.send(this.sortTask);
+				return true;
+			}
+		}
+
 		protected boolean cancel() {
 			boolean bl = false;
 			if (this.rebuildTask != null) {
 				this.rebuildTask.cancel();
 				this.rebuildTask = null;
 				bl = true;
+			}
+
+			if (this.sortTask != null) {
+				this.sortTask.cancel();
+				this.sortTask = null;
 			}
 
 			return bl;
@@ -455,8 +479,12 @@ public class SpecialChunkBuilder {
 						chunkData.bufferState = renderedChunkData.bufferState;
 						List<CompletableFuture<Void>> list = Lists.newArrayList();
 
-						renderedChunkData.renderedBuffers
-								.forEach((modelRenderer, renderedBuffer) -> list.add(SpecialChunkBuilder.this.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(modelRenderer))));
+						renderedChunkData.renderedBuffers.forEach((modelRenderer, renderedBuffer) -> {
+							list.add(SpecialChunkBuilder.this.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(modelRenderer)));
+							if (!renderedBuffer.isEmpty()) {
+								chunkData.renderedBuffers.put(modelRenderer, renderedBuffer);
+							}
+						});
 
 						return Util.combine(list).handle((listx, throwable) -> {
 							if (throwable != null && !(throwable instanceof CancellationException) && !(throwable instanceof InterruptedException)) {
@@ -529,11 +557,17 @@ public class SpecialChunkBuilder {
 					}
 
 					for (SpecialModelRenderer modelRenderer : buffers.getSpecialModelBuffers().keySet()) {
-						if (!buffers.get(modelRenderer).isBuilding()) {
-							buffers.get(modelRenderer).begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+						BufferBuilder bufferBuilder = buffers.get(modelRenderer);
+						if (!bufferBuilder.isCurrentBatchEmpty()) {
+							bufferBuilder.setQuadSorting(VertexSorting.byDistanceSquared(cameraX - originPos.getX(), cameraY - originPos.getY(), cameraZ - originPos.getZ()));
+							renderedChunkData.bufferState = bufferBuilder.popState();
 						}
 
-						BufferBuilder.RenderedBuffer renderedBuffer = buffers.get(modelRenderer).end();
+						if (!bufferBuilder.isBuilding()) {
+							bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+						}
+
+						BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();
 						if (renderedBuffer != null) {
 							renderedChunkData.renderedBuffers.put(modelRenderer, renderedBuffer);
 						}
@@ -689,6 +723,81 @@ public class SpecialChunkBuilder {
 			}
 		}
 
+		public class SortTask extends SpecialChunkBuilder.BuiltChunk.Task {
+			private final SpecialChunkBuilder.ChunkData data;
+
+			public SortTask(double distance, SpecialChunkBuilder.ChunkData data) {
+				super(distance, true);
+				this.data = data;
+			}
+
+			@Override
+			protected String name() {
+				return "rend_chk_sort";
+			}
+
+			@Override
+			public CompletableFuture<SpecialChunkBuilder.Result> run(SpecialBufferBuilderStorage buffers) {
+				if (this.cancelled.get()) {
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else if (!BuiltChunk.this.shouldBuild()) {
+					this.cancelled.set(true);
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else if (this.cancelled.get()) {
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else {
+					Vec3d vec3d = SpecialChunkBuilder.this.getCameraPosition();
+					float f = (float) vec3d.x;
+					float g = (float) vec3d.y;
+					float h = (float) vec3d.z;
+					BufferBuilder.SortState sortState = this.data.bufferState;
+
+					if (sortState != null) {
+						List<CompletableFuture<SpecialChunkBuilder.Result>> list = Lists.newArrayList();
+
+						for (Entry<RegistryKey<SpecialModelRenderer>, SpecialModelRenderer> e : SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries()) {
+							if (!this.data.isEmpty(e.getValue())) {
+								BufferBuilder bufferBuilder = buffers.get(e.getValue());
+								BuiltChunk.this.beginBufferBuilding(bufferBuilder);
+								bufferBuilder.restoreState(sortState);
+								bufferBuilder.setQuadSorting(VertexSorting.byDistanceSquared(f - BuiltChunk.this.origin.getX(), g - BuiltChunk.this.origin.getY(), h - BuiltChunk.this.origin.getZ()));
+								this.data.bufferState = bufferBuilder.popState();
+								BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();
+								if (this.cancelled.get()) {
+									renderedBuffer.release();
+									list.add(CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED));
+								} else {
+									CompletableFuture<SpecialChunkBuilder.Result> completableFuture = SpecialChunkBuilder.this.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(e.getValue()))
+											.thenApply(v -> SpecialChunkBuilder.Result.CANCELLED);
+									list.add(completableFuture);
+								}
+							}
+						}
+
+						if (list.isEmpty()) {
+							return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+						}
+
+						return Util.combine(list).handle((result, throwable) -> {
+							if (throwable != null && !(throwable instanceof CancellationException) && !(throwable instanceof InterruptedException)) {
+								MinecraftClient.getInstance().setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
+							}
+
+							return this.cancelled.get() ? SpecialChunkBuilder.Result.CANCELLED : SpecialChunkBuilder.Result.SUCCESSFUL;
+						});
+
+					} else {
+						return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+					}
+				}
+			}
+
+			@Override
+			public void cancel() {
+				this.cancelled.set(true);
+			}
+		}
+
 		abstract class Task implements Comparable<SpecialChunkBuilder.BuiltChunk.Task> {
 			protected final double distance;
 			protected final AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -718,18 +827,17 @@ public class SpecialChunkBuilder {
 				return false;
 			}
 		};
-		final Set<RenderLayer> nonEmptyLayers = new ObjectArraySet<>(RenderLayer.getBlockLayers().size());
-
-		ChunkOcclusionData occlusionGraph = new ChunkOcclusionData();
+		public final Map<SpecialModelRenderer, BufferBuilder.RenderedBuffer> renderedBuffers = new Reference2ObjectArrayMap<>();
+		public ChunkOcclusionData occlusionGraph = new ChunkOcclusionData();
 		@Nullable
-		BufferBuilder.SortState bufferState;
+		public BufferBuilder.SortState bufferState;
 
 		public boolean isEmpty() {
-			return this.nonEmptyLayers.isEmpty();
+			return this.renderedBuffers.isEmpty();
 		}
 
-		public boolean isEmpty(RenderLayer layer) {
-			return !this.nonEmptyLayers.contains(layer);
+		public boolean isEmpty(SpecialModelRenderer layer) {
+			return this.renderedBuffers.get(layer).isEmpty();
 		}
 
 		public boolean isVisibleThrough(Direction from, Direction to) {
@@ -777,7 +885,7 @@ public class SpecialChunkBuilder {
 			return this.direction != 0;
 		}
 
-		public boolean method_49633(int i, int j, int k) {
+		public boolean isAxisAlignedWith(int i, int j, int k) {
 			BlockPos blockPos = this.chunk.getOrigin();
 			return i == blockPos.getX() / 16 || k == blockPos.getZ() / 16 || j == blockPos.getY() / 16;
 		}

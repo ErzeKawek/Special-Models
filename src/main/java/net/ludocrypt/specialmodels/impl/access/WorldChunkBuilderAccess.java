@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialBufferBuilderStorage;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialBuiltChunkStorage;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder;
@@ -64,5 +65,7 @@ public interface WorldChunkBuilderAccess {
 	public void applySpecialFrustum(Frustum frustum);
 
 	public void findSpecialChunksToRebuild(Camera camera);
+
+	public void sortLayer(double sortX, double sortY, double sortZ, SpecialModelRenderer modelRenderer);
 
 }
