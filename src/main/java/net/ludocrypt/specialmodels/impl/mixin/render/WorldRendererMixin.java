@@ -44,15 +44,17 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Override
 	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera) {
 
-		SpecialModelRenderer.SPECIAL_MODEL_RENDERER.forEach((modelRenderer) -> this.sortLayer(camera.getPos().getX(), camera.getPos().getY(), camera.getPos().getZ(), modelRenderer));
-
 		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this.getSpecialChunkInfoList().listIterator(this.getSpecialChunkInfoList().size());
 
 		while (chunkInfos.hasPrevious()) {
 			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
 			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
-			builtChunk.getSpecialModelBuffers().forEach(
-					(modelRenderer, vertexBuffer) -> specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable()));
+
+			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> {
+				if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
+					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable());
+				}
+			});
 		}
 
 	}
@@ -62,6 +64,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			BlockPos origin) {
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
+			this.sortLayer(camera.getPos().getX(), camera.getPos().getY(), camera.getPos().getZ(), modelRenderer);
+
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();
@@ -89,6 +93,10 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			}
 
 			vertexBuffer.draw(viewMatrix, projectionMatrix, shader);
+
+			if (shader.chunkOffset != null) {
+				shader.chunkOffset.setVec3(0.0F, 0.0F, 0.0F);
+			}
 
 			VertexBuffer.unbind();
 
