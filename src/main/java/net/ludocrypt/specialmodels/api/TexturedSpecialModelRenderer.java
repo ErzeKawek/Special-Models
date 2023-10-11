@@ -10,6 +10,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
 public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 
@@ -17,12 +18,10 @@ public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 
 	@Override
 	@ClientOnly
-	public void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader) {
+	public void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos origin) {
 		RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
 	}
 
-	public static void init() {
-
-	}
+	public static void init() {}
 
 }

@@ -9,6 +9,7 @@ import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.minecraft.client.render.RenderLayer;
 
 public class SpecialBufferBuilderStorage {
+
 	private final Map<SpecialModelRenderer, BufferBuilder> specialModelBuffers = SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries().stream()
 			.collect(Collectors.toMap(entry -> entry.getValue(), entry -> new BufferBuilder(RenderLayer.getSolid().getExpectedBufferSize())));
 

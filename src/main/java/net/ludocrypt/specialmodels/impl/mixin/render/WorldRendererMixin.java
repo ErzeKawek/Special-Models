@@ -33,27 +33,25 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Shadow
 	@Final
 	private MinecraftClient client;
-
 	@Shadow
 	private ClientWorld world;
-
 	@Shadow
 	@Final
 	private BufferBuilderStorage bufferBuilders;
 
 	@Override
 	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera) {
-
 		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this.getSpecialChunkInfoList().listIterator(this.getSpecialChunkInfoList().size());
 
 		while (chunkInfos.hasPrevious()) {
 			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
 			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
-
 			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> {
+
 				if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
 					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable());
 				}
+
 			});
 		}
 
@@ -63,9 +61,9 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer,
 			BlockPos origin) {
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
+
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
 			this.sortLayer(camera.getPos().getX(), camera.getPos().getY(), camera.getPos().getZ(), modelRenderer);
-
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();
@@ -75,14 +73,13 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			RenderSystem.enablePolygonOffset();
 			RenderSystem.setShader(() -> shader);
 			client.gameRenderer.getLightmapTextureManager().enable();
-
 			vertexBuffer.bind();
-
 			Matrix4f viewMatrix = modelRenderer.viewMatrix(new Matrix4f(matrices.peek().getModel()));
 			Matrix4f projectionMatrix = modelRenderer.positionMatrix(new Matrix4f(positionMatrix));
+			modelRenderer.setup(matrices, new Matrix4f(viewMatrix), new Matrix4f(projectionMatrix), tickDelta, shader, origin);
 
-			modelRenderer.setup(matrices, new Matrix4f(viewMatrix), new Matrix4f(projectionMatrix), tickDelta, shader);
 			if (origin != null) {
+
 				if (shader.chunkOffset != null) {
 					BlockPos blockPos = origin;
 					float vx = (float) (blockPos.getX() - camera.getPos().getX());
@@ -90,6 +87,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 					float vz = (float) (blockPos.getZ() - camera.getPos().getZ());
 					shader.chunkOffset.setVec3(vx, vy, vz);
 				}
+
 			}
 
 			vertexBuffer.draw(viewMatrix, projectionMatrix, shader);
@@ -99,13 +97,12 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			}
 
 			VertexBuffer.unbind();
-
 			client.gameRenderer.getLightmapTextureManager().disable();
-
 			RenderSystem.polygonOffset(0.0F, 0.0F);
 			RenderSystem.disablePolygonOffset();
 			RenderSystem.disableBlend();
 		}
+
 	}
 
 	@Shadow

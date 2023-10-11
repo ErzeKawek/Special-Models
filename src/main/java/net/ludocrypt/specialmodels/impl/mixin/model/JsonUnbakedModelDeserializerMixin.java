@@ -26,12 +26,16 @@ public abstract class JsonUnbakedModelDeserializerMixin {
 	private void specialModels$deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext, CallbackInfoReturnable<JsonUnbakedModel> ci) {
 		Map<SpecialModelRenderer, Identifier> map = Maps.newHashMap();
 		JsonObject jsonObject = jsonElement.getAsJsonObject();
+
 		if (jsonObject.has("specialmodels")) {
 			JsonObject limlibExtra = jsonObject.get("specialmodels").getAsJsonObject();
+
 			for (Entry<String, JsonElement> entry : limlibExtra.entrySet()) {
 				map.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(new Identifier(entry.getKey())), new Identifier(entry.getValue().getAsString()));
 			}
+
 		}
+
 		((UnbakedModelAccess) ci.getReturnValue()).getSubModels().putAll(map);
 	}
 

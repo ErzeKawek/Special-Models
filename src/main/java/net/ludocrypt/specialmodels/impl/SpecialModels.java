@@ -15,8 +15,8 @@ import net.ludocrypt.specialmodels.api.TexturedSpecialModelRenderer;
 import net.minecraft.client.render.ShaderProgram;
 
 public class SpecialModels implements ModInitializer {
-	public static final Logger LOGGER = LoggerFactory.getLogger("Special-Models");
 
+	public static final Logger LOGGER = LoggerFactory.getLogger("Special-Models");
 	@ClientOnly
 	public static final Map<SpecialModelRenderer, ShaderProgram> LOADED_SHADERS = Maps.newHashMap();
 
@@ -24,4 +24,5 @@ public class SpecialModels implements ModInitializer {
 	public void onInitialize(ModContainer mod) {
 		TexturedSpecialModelRenderer.init();
 	}
+
 }

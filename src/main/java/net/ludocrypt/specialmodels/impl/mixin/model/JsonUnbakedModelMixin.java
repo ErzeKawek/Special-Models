@@ -32,7 +32,6 @@ public abstract class JsonUnbakedModelMixin implements UnbakedModelAccess {
 	@Shadow
 	@Final
 	private static Logger LOGGER;
-
 	@Unique
 	private Map<SpecialModelRenderer, Identifier> subModels = Maps.newHashMap();
 
@@ -40,17 +39,16 @@ public abstract class JsonUnbakedModelMixin implements UnbakedModelAccess {
 	private void specialModels$bake(ModelBaker loader, JsonUnbakedModel parent, Function<Material, Sprite> textureGetter, ModelBakeSettings settings, Identifier id, boolean hasDepth,
 			CallbackInfoReturnable<BakedModel> ci) {
 		this.getSubModels().forEach((modelRenderer, modelId) -> {
-			if (!modelId.equals(id)) {
 
+			if (!modelId.equals(id)) {
 				UnbakedModel model = loader.getModel(modelId);
 				model.resolveParents(loader::getModel);
 				BakedModel bakedModel = model.bake(loader, textureGetter, settings, modelId);
-
 				((BakedModelAccess) ci.getReturnValue()).addModel(modelRenderer, null, bakedModel);
-
 			} else {
 				LOGGER.warn("Model '{}' caught in chain! Renderer '{}' caught model '{}'", id, modelRenderer, modelId);
 			}
+
 		});
 	}
 

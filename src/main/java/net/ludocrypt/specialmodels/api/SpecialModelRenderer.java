@@ -12,6 +12,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
 public abstract class SpecialModelRenderer {
 
@@ -20,7 +21,7 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	@ClientOnly
-	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader);
+	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos origin);
 
 	@ClientOnly
 	public MutableQuad modifyQuad(MutableQuad quad) {

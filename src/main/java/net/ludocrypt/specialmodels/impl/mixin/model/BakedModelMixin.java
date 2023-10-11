@@ -22,7 +22,6 @@ public interface BakedModelMixin extends BakedModelAccess {
 	}
 
 	@Override
-	default void addModel(SpecialModelRenderer modelRenderer, @Nullable BlockState state, BakedModel model) {
-	}
+	default void addModel(SpecialModelRenderer modelRenderer, @Nullable BlockState state, BakedModel model) {}
 
 }

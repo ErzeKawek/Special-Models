@@ -11,12 +11,10 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 public class StoredBuffer {
 
 	private final int id;
-
 	private final int x;
 	private final int y;
 	private final int width;
 	private final int height;
-
 	private final Matrix4f projectionMatrix;
 	private final VertexSorting sorting;
 

@@ -30,6 +30,7 @@ public class GameRendererMixin {
 	private void specialModels$loadShaders(ResourceFactory manager, CallbackInfo ci, List<ShaderStage> list, List<Pair<ShaderProgram, Consumer<ShaderProgram>>> list2) {
 		SpecialModels.LOADED_SHADERS.clear();
 		SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries().stream().map(Entry::getKey).map(RegistryKey::getValue).forEach((id) -> {
+
 			try {
 				list2.add(Pair.of(new ShaderProgram(manager, "rendertype_" + id.getNamespace() + "_" + id.getPath(), VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL),
 						(shader) -> SpecialModels.LOADED_SHADERS.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(id), shader)));
@@ -39,6 +40,7 @@ public class GameRendererMixin {
 				e.printStackTrace();
 				throw new RuntimeException();
 			}
+
 		});
 	}
 
