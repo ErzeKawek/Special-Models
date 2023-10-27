@@ -236,6 +236,7 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 			this.needsFullSpecialBuiltChunkUpdate = true;
 			this.recentlyCompiledSpecialChunks.clear();
 			RenderLayers.setFancyGraphicsOrBetter(MinecraftClient.isFancyGraphicsOrBetter());
+			this.viewDistance = this.client.options.getEffectiveViewDistance();
 
 			if (this.specialChunks != null) {
 				this.specialChunks.clear();
