@@ -37,9 +37,11 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.access.BakedModelAccess;
+import net.ludocrypt.specialmodels.impl.access.StateBufferBuilderAccess;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
 import net.ludocrypt.specialmodels.impl.render.MutableQuad;
 import net.ludocrypt.specialmodels.impl.render.MutableVertice;
+import net.ludocrypt.specialmodels.impl.render.SpecialVertexFormats;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -365,7 +367,7 @@ public class SpecialChunkBuilder {
 		}
 
 		void beginBufferBuilding(BufferBuilder buffer) {
-			buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+			buffer.begin(VertexFormat.DrawMode.QUADS, SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
 		}
 
 		public SpecialChunkBuilder.ChunkData getData() {
@@ -575,9 +577,10 @@ public class SpecialChunkBuilder {
 									BakedModel model = pair.getSecond();
 									long modelSeed = state.getRenderingSeed(pos);
 									BufferBuilder buffer = buffers.get(modelRenderer);
+									((StateBufferBuilderAccess) buffer).setStateAccessor(() -> modelRenderer.appendState(chunkRenderRegion, pos, state, modelSeed));
 
 									if (!buffer.isBuilding()) {
-										buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+										buffer.begin(VertexFormat.DrawMode.QUADS, SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
 									}
 
 									ReconstructableModel constructedModel = new ReconstructableModel(model);
@@ -602,7 +605,7 @@ public class SpecialChunkBuilder {
 						}
 
 						if (!bufferBuilder.isBuilding()) {
-							bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+							bufferBuilder.begin(VertexFormat.DrawMode.QUADS, SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
 						}
 
 						BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();

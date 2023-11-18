@@ -12,6 +12,7 @@
 		"model.JsonUnbakedModelDeserializerMixin",
 		"model.JsonUnbakedModelMixin",
 		"model.MultipartBakedModelMixin",
+		"render.BufferBuilderMixin",
 		"render.GameRendererMixin",
 		"render.VertexBufferAccessor",
 		"render.WorldRendererAfterMixin",

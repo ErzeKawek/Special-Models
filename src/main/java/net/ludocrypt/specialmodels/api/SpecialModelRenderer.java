@@ -7,7 +7,10 @@ import com.mojang.serialization.Lifecycle;
 
 import net.ludocrypt.specialmodels.impl.mixin.registry.RegistriesAccessor;
 import net.ludocrypt.specialmodels.impl.render.MutableQuad;
+import net.ludocrypt.specialmodels.impl.render.Vec4b;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.render.ShaderProgram;
+import net.minecraft.client.render.chunk.ChunkRenderRegion;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -21,7 +24,7 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	@ClientOnly
-	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos origin);
+	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos chunkOrigin);
 
 	@ClientOnly
 	public MutableQuad modifyQuad(MutableQuad quad) {
@@ -36,6 +39,11 @@ public abstract class SpecialModelRenderer {
 	@ClientOnly
 	public Matrix4f viewMatrix(Matrix4f in) {
 		return in;
+	}
+
+	@ClientOnly
+	public Vec4b appendState(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, long modelSeed) {
+		return new Vec4b((byte) 0, (byte) 0, (byte) 0, (byte) 0);
 	}
 
 }
