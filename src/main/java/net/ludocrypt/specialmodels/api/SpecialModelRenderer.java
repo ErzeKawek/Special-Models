@@ -43,7 +43,7 @@ public abstract class SpecialModelRenderer {
 
 	@ClientOnly
 	public Vec4b appendState(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, long modelSeed) {
-		return new Vec4b((byte) 0, (byte) 0, (byte) 0, (byte) 0);
+		return new Vec4b(0, 0, 0, 0);
 	}
 
 }
