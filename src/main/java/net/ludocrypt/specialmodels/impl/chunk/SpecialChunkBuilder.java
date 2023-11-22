@@ -76,7 +76,8 @@ import net.minecraft.world.chunk.ChunkStatus;
 public class SpecialChunkBuilder {
 
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private final PriorityBlockingQueue<SpecialChunkBuilder.BuiltChunk.Task> highPriorityChunksToBuild = Queues.newPriorityBlockingQueue();
+	private final PriorityBlockingQueue<SpecialChunkBuilder.BuiltChunk.Task> highPriorityChunksToBuild = Queues
+		.newPriorityBlockingQueue();
 	private final Queue<SpecialChunkBuilder.BuiltChunk.Task> chunksToBuild = Queues.<SpecialChunkBuilder.BuiltChunk.Task>newLinkedBlockingDeque();
 	private int highPriorityQuota = 2;
 	private final Queue<SpecialBufferBuilderStorage> threadBuffers;
@@ -91,10 +92,15 @@ public class SpecialChunkBuilder {
 	private Vec3d cameraPosition = Vec3d.ZERO;
 	private MinecraftClient client;
 
-	public SpecialChunkBuilder(ClientWorld world, WorldRenderer worldRenderer, Executor executor, boolean useMaxThreads, SpecialBufferBuilderStorage buffers) {
+	public SpecialChunkBuilder(ClientWorld world, WorldRenderer worldRenderer, Executor executor, boolean useMaxThreads,
+			SpecialBufferBuilderStorage buffers) {
 		this.world = world;
 		this.worldRenderer = worldRenderer;
-		int i = Math.max(1, (int) ((double) Runtime.getRuntime().maxMemory() * 0.3) / (RenderLayer.getSolid().getExpectedBufferSize() * SpecialModelRenderer.SPECIAL_MODEL_RENDERER.size() * 4) - 1);
+		int i = Math
+			.max(1,
+				(int) ((double) Runtime.getRuntime().maxMemory() * 0.3) / (RenderLayer
+					.getSolid()
+					.getExpectedBufferSize() * SpecialModelRenderer.SPECIAL_MODEL_RENDERER.size() * 4) - 1);
 		int j = Runtime.getRuntime().availableProcessors();
 		int k = useMaxThreads ? j : Math.min(j, 4);
 		int l = Math.max(1, Math.min(k, i));
@@ -136,30 +142,33 @@ public class SpecialChunkBuilder {
 			SpecialChunkBuilder.BuiltChunk.Task task = this.getNextBuildTask();
 
 			if (task != null) {
-				SpecialBufferBuilderStorage SpecialBufferBuilderStorage = (SpecialBufferBuilderStorage) this.threadBuffers.poll();
+				SpecialBufferBuilderStorage SpecialBufferBuilderStorage = (SpecialBufferBuilderStorage) this.threadBuffers
+					.poll();
 				this.queuedTaskCount = this.highPriorityChunksToBuild.size() + this.chunksToBuild.size();
 				this.bufferCount = this.threadBuffers.size();
-				CompletableFuture.supplyAsync(Util.debugSupplier(task.name(), () -> task.run(SpecialBufferBuilderStorage)), this.executor).thenCompose(future -> future)
-						.whenComplete((result, throwable) -> {
+				CompletableFuture
+					.supplyAsync(Util.debugSupplier(task.name(), () -> task.run(SpecialBufferBuilderStorage)), this.executor)
+					.thenCompose(future -> future)
+					.whenComplete((result, throwable) -> {
 
-							if (throwable != null) {
-								MinecraftClient.getInstance().setCrashReport(CrashReport.create(throwable, "Batching chunks"));
-							} else {
-								this.mailbox.send((Runnable) () -> {
+						if (throwable != null) {
+							MinecraftClient.getInstance().setCrashReport(CrashReport.create(throwable, "Batching chunks"));
+						} else {
+							this.mailbox.send((Runnable) () -> {
 
-									if (result == SpecialChunkBuilder.Result.SUCCESSFUL) {
-										SpecialBufferBuilderStorage.clear();
-									} else {
-										SpecialBufferBuilderStorage.reset();
-									}
+								if (result == SpecialChunkBuilder.Result.SUCCESSFUL) {
+									SpecialBufferBuilderStorage.clear();
+								} else {
+									SpecialBufferBuilderStorage.reset();
+								}
 
-									this.threadBuffers.add(SpecialBufferBuilderStorage);
-									this.bufferCount = this.threadBuffers.size();
-									this.scheduleRunTasks();
-								});
-							}
+								this.threadBuffers.add(SpecialBufferBuilderStorage);
+								this.bufferCount = this.threadBuffers.size();
+								this.scheduleRunTasks();
+							});
+						}
 
-						});
+					});
 			}
 
 		}
@@ -179,7 +188,8 @@ public class SpecialChunkBuilder {
 
 		}
 
-		SpecialChunkBuilder.BuiltChunk.Task task = (SpecialChunkBuilder.BuiltChunk.Task) this.highPriorityChunksToBuild.poll();
+		SpecialChunkBuilder.BuiltChunk.Task task = (SpecialChunkBuilder.BuiltChunk.Task) this.highPriorityChunksToBuild
+			.poll();
 
 		if (task != null) {
 			--this.highPriorityQuota;
@@ -192,7 +202,9 @@ public class SpecialChunkBuilder {
 	}
 
 	public String getDebugString() {
-		return String.format(Locale.ROOT, "pC: %03d, pU: %02d, aB: %02d", this.queuedTaskCount, this.uploadQueue.size(), this.bufferCount);
+		return String
+			.format(Locale.ROOT, "pC: %03d, pU: %02d, aB: %02d", this.queuedTaskCount, this.uploadQueue.size(),
+				this.bufferCount);
 	}
 
 	public int getToBatchCount() {
@@ -261,7 +273,8 @@ public class SpecialChunkBuilder {
 	private void clear() {
 
 		while (!this.highPriorityChunksToBuild.isEmpty()) {
-			SpecialChunkBuilder.BuiltChunk.Task task = (SpecialChunkBuilder.BuiltChunk.Task) this.highPriorityChunksToBuild.poll();
+			SpecialChunkBuilder.BuiltChunk.Task task = (SpecialChunkBuilder.BuiltChunk.Task) this.highPriorityChunksToBuild
+				.poll();
 
 			if (task != null) {
 				task.cancel();
@@ -295,7 +308,8 @@ public class SpecialChunkBuilder {
 
 		public static final int SIZE = 16;
 		public final int index;
-		public final AtomicReference<SpecialChunkBuilder.ChunkData> data = new AtomicReference<SpecialChunkBuilder.ChunkData>(SpecialChunkBuilder.ChunkData.EMPTY);
+		public final AtomicReference<SpecialChunkBuilder.ChunkData> data = new AtomicReference<SpecialChunkBuilder.ChunkData>(
+			SpecialChunkBuilder.ChunkData.EMPTY);
 		final AtomicInteger cancelledInitialBuilds = new AtomicInteger(0);
 		@Nullable
 		private SpecialChunkBuilder.BuiltChunk.RebuildTask rebuildTask;
@@ -312,8 +326,10 @@ public class SpecialChunkBuilder {
 
 		});
 		private boolean needsImportantRebuild;
-		private final Map<SpecialModelRenderer, VertexBuffer> specialModelBuffers = SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries().stream()
-				.collect(Collectors.toMap(entry -> entry.getValue(), entry -> new VertexBuffer(VertexBuffer.Usage.STATIC)));
+		private final Map<SpecialModelRenderer, VertexBuffer> specialModelBuffers = SpecialModelRenderer.SPECIAL_MODEL_RENDERER
+			.getEntries()
+			.stream()
+			.collect(Collectors.toMap(entry -> entry.getValue(), entry -> new VertexBuffer(VertexBuffer.Usage.STATIC)));
 
 		public VertexBuffer getBuffer(SpecialModelRenderer modelRenderer) {
 			return specialModelBuffers.get(modelRenderer);
@@ -329,7 +345,9 @@ public class SpecialChunkBuilder {
 		}
 
 		private boolean isChunkNonEmpty(BlockPos pos) {
-			return SpecialChunkBuilder.this.world.getChunk(ChunkSectionPos.getSectionCoord(pos.getX()), ChunkSectionPos.getSectionCoord(pos.getZ()), ChunkStatus.FULL, false) != null;
+			return SpecialChunkBuilder.this.world
+				.getChunk(ChunkSectionPos.getSectionCoord(pos.getX()), ChunkSectionPos.getSectionCoord(pos.getZ()),
+					ChunkStatus.FULL, false) != null;
 		}
 
 		public boolean shouldBuild() {
@@ -337,8 +355,10 @@ public class SpecialChunkBuilder {
 			if (!(this.getSquaredCameraDistance() > 576.0)) {
 				return true;
 			} else {
-				return this.isChunkNonEmpty(this.neighborPositions[Direction.WEST.ordinal()]) && this.isChunkNonEmpty(this.neighborPositions[Direction.NORTH.ordinal()])
-						&& this.isChunkNonEmpty(this.neighborPositions[Direction.EAST.ordinal()]) && this.isChunkNonEmpty(this.neighborPositions[Direction.SOUTH.ordinal()]);
+				return this.isChunkNonEmpty(this.neighborPositions[Direction.WEST.ordinal()]) && this
+					.isChunkNonEmpty(this.neighborPositions[Direction.NORTH.ordinal()]) && this
+						.isChunkNonEmpty(this.neighborPositions[Direction.EAST.ordinal()]) && this
+							.isChunkNonEmpty(this.neighborPositions[Direction.SOUTH.ordinal()]);
 			}
 
 		}
@@ -350,7 +370,8 @@ public class SpecialChunkBuilder {
 		public void setOrigin(int x, int y, int z) {
 			this.clear();
 			this.origin.set(x, y, z);
-			this.boundingBox = new Box((double) x, (double) y, (double) z, (double) (x + 16), (double) (y + 16), (double) (z + 16));
+			this.boundingBox = new Box((double) x, (double) y, (double) z, (double) (x + 16), (double) (y + 16),
+				(double) (z + 16));
 
 			for (Direction direction : Direction.values()) {
 				this.neighborPositions[direction.ordinal()].set(this.origin).move(direction, 16);
@@ -451,14 +472,16 @@ public class SpecialChunkBuilder {
 		public SpecialChunkBuilder.BuiltChunk.Task createRebuildTask(ChunkRenderRegionCache renderRegionCache) {
 			boolean bl = this.cancel();
 			BlockPos blockPos = this.origin.toImmutable();
-			ChunkRenderRegion chunkRenderRegion = renderRegionCache.createRenderRegion(SpecialChunkBuilder.this.world, blockPos.add(-1, -1, -1), blockPos.add(16, 16, 16), 1);
+			ChunkRenderRegion chunkRenderRegion = renderRegionCache
+				.createRenderRegion(SpecialChunkBuilder.this.world, blockPos.add(-1, -1, -1), blockPos.add(16, 16, 16), 1);
 			boolean bl2 = this.data.get() == SpecialChunkBuilder.ChunkData.EMPTY;
 
 			if (bl2 && bl) {
 				this.cancelledInitialBuilds.incrementAndGet();
 			}
 
-			this.rebuildTask = new SpecialChunkBuilder.BuiltChunk.RebuildTask(this.getSquaredCameraDistance(), chunkRenderRegion, !bl2 || this.cancelledInitialBuilds.get() > 2);
+			this.rebuildTask = new SpecialChunkBuilder.BuiltChunk.RebuildTask(this.getSquaredCameraDistance(),
+				chunkRenderRegion, !bl2 || this.cancelledInitialBuilds.get() > 2);
 			return this.rebuildTask;
 		}
 
@@ -504,7 +527,8 @@ public class SpecialChunkBuilder {
 					float f = (float) vec3d.x;
 					float g = (float) vec3d.y;
 					float h = (float) vec3d.z;
-					SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData renderedChunkData = this.render(f, g, h, buffers);
+					SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData renderedChunkData = this
+						.render(f, g, h, buffers);
 
 					if (this.cancelled.get()) {
 						renderedChunkData.renderedBuffers.values().forEach(BufferBuilder.RenderedBuffer::release);
@@ -515,7 +539,9 @@ public class SpecialChunkBuilder {
 						chunkData.bufferState = renderedChunkData.bufferState;
 						List<CompletableFuture<Void>> list = Lists.newArrayList();
 						renderedChunkData.renderedBuffers.forEach((modelRenderer, renderedBuffer) -> {
-							list.add(SpecialChunkBuilder.this.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(modelRenderer)));
+							list
+								.add(SpecialChunkBuilder.this
+									.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(modelRenderer)));
 
 							if (!renderedBuffer.isEmpty()) {
 								chunkData.renderedBuffers.put(modelRenderer, renderedBuffer);
@@ -525,7 +551,9 @@ public class SpecialChunkBuilder {
 						return Util.combine(list).handle((listx, throwable) -> {
 
 							if (throwable != null && !(throwable instanceof CancellationException) && !(throwable instanceof InterruptedException)) {
-								MinecraftClient.getInstance().setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
+								MinecraftClient
+									.getInstance()
+									.setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
 							}
 
 							if (this.cancelled.get()) {
@@ -533,7 +561,8 @@ public class SpecialChunkBuilder {
 							} else {
 								BuiltChunk.this.data.set(chunkData);
 								BuiltChunk.this.cancelledInitialBuilds.set(0);
-								((WorldChunkBuilderAccess) (SpecialChunkBuilder.this.worldRenderer)).addSpecialBuiltChunk(BuiltChunk.this);
+								((WorldChunkBuilderAccess) (SpecialChunkBuilder.this.worldRenderer))
+									.addSpecialBuiltChunk(BuiltChunk.this);
 								return SpecialChunkBuilder.Result.SUCCESSFUL;
 							}
 
@@ -544,7 +573,8 @@ public class SpecialChunkBuilder {
 
 			}
 
-			private SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData render(float cameraX, float cameraY, float cameraZ, SpecialBufferBuilderStorage buffers) {
+			private SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData render(float cameraX, float cameraY,
+					float cameraZ, SpecialBufferBuilderStorage buffers) {
 				SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData renderedChunkData = new SpecialChunkBuilder.BuiltChunk.RebuildTask.RenderedChunkData();
 				BlockPos originPos = BuiltChunk.this.origin.toImmutable();
 				BlockPos boundingPos = originPos.add(15, 15, 15);
@@ -567,8 +597,10 @@ public class SpecialChunkBuilder {
 
 						if (state.getRenderType() != BlockRenderType.INVISIBLE) {
 							matrixStack.push();
-							matrixStack.translate((float) (pos.getX() & 15), (float) (pos.getY() & 15), (float) (pos.getZ() & 15));
-							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) blockRenderManager.getModel(state)).getModels(state);
+							matrixStack
+								.translate((float) (pos.getX() & 15), (float) (pos.getY() & 15), (float) (pos.getZ() & 15));
+							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) blockRenderManager
+								.getModel(state)).getModels(state);
 
 							if (!models.isEmpty()) {
 
@@ -577,16 +609,26 @@ public class SpecialChunkBuilder {
 									BakedModel model = pair.getSecond();
 									long modelSeed = state.getRenderingSeed(pos);
 									BufferBuilder buffer = buffers.get(modelRenderer);
-									((StateBufferBuilderAccess) buffer).setStateAccessor(() -> modelRenderer.appendState(chunkRenderRegion, pos, state, modelSeed));
+									((StateBufferBuilderAccess) buffer)
+										.setStateAccessor(
+											() -> modelRenderer.appendState(chunkRenderRegion, pos, state, modelSeed));
 
 									if (!buffer.isBuilding()) {
-										buffer.begin(VertexFormat.DrawMode.QUADS, SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
+										buffer
+											.begin(VertexFormat.DrawMode.QUADS,
+												SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
 									}
 
 									ReconstructableModel constructedModel = new ReconstructableModel(model);
-									constructedModel.setFunction((quads, blockState, direction, random) -> quads.stream().map((quad) -> reconstructBakedQuad(quad, modelRenderer)).toList());
-									blockRenderManager.getModelRenderer().render(chunkRenderRegion, constructedModel, state, pos, matrixStack, buffer, true, randomGenerator, modelSeed,
-											OverlayTexture.DEFAULT_UV);
+									constructedModel
+										.setFunction((quads, blockState, direction, random) -> quads
+											.stream()
+											.map((quad) -> reconstructBakedQuad(quad, modelRenderer))
+											.toList());
+									blockRenderManager
+										.getModelRenderer()
+										.render(chunkRenderRegion, constructedModel, state, pos, matrixStack, buffer, true,
+											randomGenerator, modelSeed, OverlayTexture.DEFAULT_UV);
 								}
 
 							}
@@ -600,12 +642,17 @@ public class SpecialChunkBuilder {
 						BufferBuilder bufferBuilder = buffers.get(modelRenderer);
 
 						if (!bufferBuilder.isCurrentBatchEmpty()) {
-							bufferBuilder.setQuadSorting(VertexSorting.byDistanceSquared(cameraX - originPos.getX(), cameraY - originPos.getY(), cameraZ - originPos.getZ()));
+							bufferBuilder
+								.setQuadSorting(VertexSorting
+									.byDistanceSquared(cameraX - originPos.getX(), cameraY - originPos.getY(),
+										cameraZ - originPos.getZ()));
 							renderedChunkData.bufferState = bufferBuilder.popState();
 						}
 
 						if (!bufferBuilder.isBuilding()) {
-							bufferBuilder.begin(VertexFormat.DrawMode.QUADS, SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
+							bufferBuilder
+								.begin(VertexFormat.DrawMode.QUADS,
+									SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE);
 						}
 
 						BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();
@@ -628,7 +675,8 @@ public class SpecialChunkBuilder {
 				int vertexDataLength = 8;
 
 				try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-					ByteBuffer byteBuffer = memoryStack.malloc(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSize());
+					ByteBuffer byteBuffer = memoryStack
+						.malloc(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSize());
 					IntBuffer intBuffer = byteBuffer.asIntBuffer();
 					int[] reconstructed = new int[vertexData.length];
 					int uvIndex = 0;
@@ -663,8 +711,10 @@ public class SpecialChunkBuilder {
 					float z4 = byteBuffer.getFloat(8);
 					float u4 = byteBuffer.getFloat(16);
 					float v4 = byteBuffer.getFloat(20);
-					MutableQuad mutableQuad = modelRenderer.modifyQuad(new MutableQuad(new MutableVertice(x1, y1, z1, u1, v1), new MutableVertice(x2, y2, z2, u2, v2),
-							new MutableVertice(x3, y3, z3, u3, v3), new MutableVertice(x4, y4, z4, u4, v4)));
+					MutableQuad mutableQuad = modelRenderer
+						.modifyQuad(
+							new MutableQuad(new MutableVertice(x1, y1, z1, u1, v1), new MutableVertice(x2, y2, z2, u2, v2),
+								new MutableVertice(x3, y3, z3, u3, v3), new MutableVertice(x4, y4, z4, u4, v4)));
 					uvIndex = 0;
 					intBuffer.clear();
 					intBuffer.put(vertexData, uvIndex, vertexDataLength);
@@ -705,7 +755,8 @@ public class SpecialChunkBuilder {
 					byteBuffer.putFloat(20, mutableQuad.getV4().getUv().y);
 					intBuffer.position(0);
 					intBuffer.get(reconstructed, uvIndex, vertexDataLength);
-					return new BakedQuad(reconstructed, quad.getColorIndex(), quad.getFace(), quad.getSprite(), quad.hasShade());
+					return new BakedQuad(reconstructed, quad.getColorIndex(), quad.getFace(), quad.getSprite(),
+						quad.hasShade());
 				}
 
 			}
@@ -727,7 +778,8 @@ public class SpecialChunkBuilder {
 				@Nullable
 				public BufferBuilder.SortState bufferState;
 
-				RenderedChunkData() {}
+				RenderedChunkData() {
+				}
 
 			}
 
@@ -739,7 +791,8 @@ public class SpecialChunkBuilder {
 					this.wrapped = model;
 				}
 
-				public void setFunction(QuadFunction<List<BakedQuad>, BlockState, Direction, RandomGenerator, List<BakedQuad>> function) {
+				public void setFunction(
+						QuadFunction<List<BakedQuad>, BlockState, Direction, RandomGenerator, List<BakedQuad>> function) {
 					this.function = function;
 				}
 
@@ -786,13 +839,17 @@ public class SpecialChunkBuilder {
 					if (sortState != null) {
 						List<CompletableFuture<SpecialChunkBuilder.Result>> list = Lists.newArrayList();
 
-						for (Entry<RegistryKey<SpecialModelRenderer>, SpecialModelRenderer> e : SpecialModelRenderer.SPECIAL_MODEL_RENDERER.getEntries()) {
+						for (Entry<RegistryKey<SpecialModelRenderer>, SpecialModelRenderer> e : SpecialModelRenderer.SPECIAL_MODEL_RENDERER
+							.getEntries()) {
 
 							if (!this.data.isEmpty(e.getValue())) {
 								BufferBuilder bufferBuilder = buffers.get(e.getValue());
 								BuiltChunk.this.beginBufferBuilding(bufferBuilder);
 								bufferBuilder.restoreState(sortState);
-								bufferBuilder.setQuadSorting(VertexSorting.byDistanceSquared(f - BuiltChunk.this.origin.getX(), g - BuiltChunk.this.origin.getY(), h - BuiltChunk.this.origin.getZ()));
+								bufferBuilder
+									.setQuadSorting(VertexSorting
+										.byDistanceSquared(f - BuiltChunk.this.origin.getX(),
+											g - BuiltChunk.this.origin.getY(), h - BuiltChunk.this.origin.getZ()));
 								this.data.bufferState = bufferBuilder.popState();
 								BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();
 
@@ -800,8 +857,9 @@ public class SpecialChunkBuilder {
 									renderedBuffer.release();
 									list.add(CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED));
 								} else {
-									CompletableFuture<SpecialChunkBuilder.Result> completableFuture = SpecialChunkBuilder.this.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(e.getValue()))
-											.thenApply(v -> SpecialChunkBuilder.Result.CANCELLED);
+									CompletableFuture<SpecialChunkBuilder.Result> completableFuture = SpecialChunkBuilder.this
+										.scheduleUpload(renderedBuffer, BuiltChunk.this.getBuffer(e.getValue()))
+										.thenApply(v -> SpecialChunkBuilder.Result.CANCELLED);
 									list.add(completableFuture);
 								}
 
@@ -816,10 +874,13 @@ public class SpecialChunkBuilder {
 						return Util.combine(list).handle((result, throwable) -> {
 
 							if (throwable != null && !(throwable instanceof CancellationException) && !(throwable instanceof InterruptedException)) {
-								MinecraftClient.getInstance().setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
+								MinecraftClient
+									.getInstance()
+									.setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
 							}
 
-							return this.cancelled.get() ? SpecialChunkBuilder.Result.CANCELLED : SpecialChunkBuilder.Result.SUCCESSFUL;
+							return this.cancelled.get() ? SpecialChunkBuilder.Result.CANCELLED
+									: SpecialChunkBuilder.Result.SUCCESSFUL;
 						});
 					} else {
 						return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
@@ -881,7 +942,9 @@ public class SpecialChunkBuilder {
 		}
 
 		public boolean isEmpty(SpecialModelRenderer layer) {
-			return !this.renderedBuffers.containsKey(layer) || (this.renderedBuffers.containsKey(layer) && this.renderedBuffers.get(layer).isEmpty());
+			return !this.renderedBuffers
+				.containsKey(
+					layer) || (this.renderedBuffers.containsKey(layer) && this.renderedBuffers.get(layer).isEmpty());
 		}
 
 		public boolean isVisibleThrough(Direction from, Direction to) {

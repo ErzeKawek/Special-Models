@@ -41,7 +41,10 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 
 	@Override
 	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera) {
-		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this.getSpecialChunkInfoList().listIterator(this.getSpecialChunkInfoList().size());
+
+		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this
+			.getSpecialChunkInfoList()
+			.listIterator(this.getSpecialChunkInfoList().size());
 
 		while (chunkInfos.hasPrevious()) {
 			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
@@ -49,7 +52,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> {
 
 				if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
-					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, builtChunk.getOrigin().toImmutable());
+					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer,
+						builtChunk.getOrigin().toImmutable());
 				}
 
 			});
@@ -58,8 +62,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	}
 
 	@Unique
-	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix, SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer,
-			BlockPos origin) {
+	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix,
+			SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
@@ -67,8 +71,9 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();
-			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-					GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			RenderSystem
+				.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 			RenderSystem.polygonOffset(3.0F, 3.0F);
 			RenderSystem.enablePolygonOffset();
 			RenderSystem.setShader(() -> shader);
@@ -76,7 +81,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			vertexBuffer.bind();
 			Matrix4f viewMatrix = modelRenderer.viewMatrix(new Matrix4f(matrices.peek().getModel()));
 			Matrix4f projectionMatrix = modelRenderer.positionMatrix(new Matrix4f(positionMatrix));
-			modelRenderer.setup(matrices, new Matrix4f(viewMatrix), new Matrix4f(projectionMatrix), tickDelta, shader, origin);
+			modelRenderer
+				.setup(matrices, new Matrix4f(viewMatrix), new Matrix4f(projectionMatrix), tickDelta, shader, origin);
 
 			if (origin != null) {
 
@@ -106,6 +112,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	}
 
 	@Shadow
-	abstract void renderEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers);
+	abstract void renderEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float tickDelta,
+			MatrixStack matrices, VertexConsumerProvider vertexConsumers);
 
 }

@@ -14,14 +14,18 @@ import net.minecraft.util.math.BlockPos;
 
 public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 
-	public static final SpecialModelRenderer TEXTURED = Registry.register(SpecialModelRenderer.SPECIAL_MODEL_RENDERER, new Identifier("specialmodels", "textured"), new TexturedSpecialModelRenderer());
+	public static final SpecialModelRenderer TEXTURED = Registry
+		.register(SpecialModelRenderer.SPECIAL_MODEL_RENDERER, new Identifier("specialmodels", "textured"),
+			new TexturedSpecialModelRenderer());
 
 	@Override
 	@ClientOnly
-	public void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos origin) {
+	public void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta,
+			ShaderProgram shader, BlockPos origin) {
 		RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
 	}
 
-	public static void init() {}
+	public static void init() {
+	}
 
 }

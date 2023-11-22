@@ -21,7 +21,8 @@ import net.ludocrypt.specialmodels.impl.render.SpecialVertexFormats;
 import net.ludocrypt.specialmodels.impl.render.Vec4b;
 
 @Mixin(BufferBuilder.class)
-public abstract class BufferBuilderMixin extends FixedColorVertexConsumer implements BufferVertexConsumer, StateBufferBuilderAccess {
+public abstract class BufferBuilderMixin extends FixedColorVertexConsumer
+		implements BufferVertexConsumer, StateBufferBuilderAccess {
 
 	@Shadow
 	private boolean textured;
@@ -42,8 +43,8 @@ public abstract class BufferBuilderMixin extends FixedColorVertexConsumer implem
 	}
 
 	@Inject(method = "Lcom/mojang/blaze3d/vertex/BufferBuilder;vertex(FFFFFFFFFIIFFF)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/BufferBuilder;putByte(IB)V", ordinal = 6, shift = Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void specialModels$vertex(float x, float y, float z, float red, float green, float blue, float alpha, float u, float v, int overlay, int light, float normalX, float normalY, float normalZ,
-			CallbackInfo ci, int i) {
+	private void specialModels$vertex(float x, float y, float z, float red, float green, float blue, float alpha, float u,
+			float v, int overlay, int light, float normalX, float normalY, float normalZ, CallbackInfo ci, int i) {
 
 		if (format == SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE) {
 			Vec4b state = this.state.get();

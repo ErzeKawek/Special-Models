@@ -62,6 +62,7 @@ public class MultipartBakedModelMixin implements BakedModelAccess {
 	}
 
 	@Override
-	public void addModel(SpecialModelRenderer modelRenderer, @Nullable BlockState state, BakedModel model) {}
+	public void addModel(SpecialModelRenderer modelRenderer, @Nullable BlockState state, BakedModel model) {
+	}
 
 }

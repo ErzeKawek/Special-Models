@@ -38,7 +38,8 @@ public abstract class WorldRendererAfterMixin implements WorldRendererAccess, Wo
 	private boolean shouldCaptureFrustum;
 
 	@Inject(method = "Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;FJZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lorg/joml/Matrix4f;)V", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-	private void specialModels$render$clear(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
+	private void specialModels$render$clear(MatrixStack matrices, float tickDelta, long limitTime,
+			boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
 			LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
 
 		if (IrisBridge.IRIS_LOADED) {
@@ -48,7 +49,9 @@ public abstract class WorldRendererAfterMixin implements WorldRendererAccess, Wo
 
 				if (this.capturedFrustum != null) {
 					frustum = this.capturedFrustum;
-					frustum.setPosition(this.capturedFrustumPosition.x, this.capturedFrustumPosition.y, this.capturedFrustumPosition.z);
+					frustum
+						.setPosition(this.capturedFrustumPosition.x, this.capturedFrustumPosition.y,
+							this.capturedFrustumPosition.z);
 				} else {
 					frustum = this.frustum;
 				}
@@ -56,7 +59,9 @@ public abstract class WorldRendererAfterMixin implements WorldRendererAccess, Wo
 				if (this.shouldCaptureFrustum) {
 					Matrix4f matrix4f2 = matrices.peek().getModel();
 					Vec3d vec3d = camera.getPos();
-					this.captureFrustum(matrix4f2, positionMatrix, vec3d.x, vec3d.y, vec3d.z, this.capturedFrustum != null ? new Frustum(matrix4f2, positionMatrix) : frustum);
+					this
+						.captureFrustum(matrix4f2, positionMatrix, vec3d.x, vec3d.y, vec3d.z,
+							this.capturedFrustum != null ? new Frustum(matrix4f2, positionMatrix) : frustum);
 					this.shouldCaptureFrustum = false;
 				}
 

@@ -17,7 +17,8 @@ public class SpecialBuiltChunkStorage {
 	protected int sizeZ;
 	public SpecialChunkBuilder.BuiltChunk[] chunks;
 
-	public SpecialBuiltChunkStorage(SpecialChunkBuilder SpecialChunkBuilder, World world, int viewDistance, WorldRenderer worldRenderer) {
+	public SpecialBuiltChunkStorage(SpecialChunkBuilder SpecialChunkBuilder, World world, int viewDistance,
+			WorldRenderer worldRenderer) {
 		this.worldRenderer = worldRenderer;
 		this.world = world;
 		this.setViewDistance(viewDistance);

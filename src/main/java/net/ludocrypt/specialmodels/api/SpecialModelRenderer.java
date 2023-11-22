@@ -19,12 +19,15 @@ import net.minecraft.util.math.BlockPos;
 
 public abstract class SpecialModelRenderer {
 
-	public static final RegistryKey<Registry<SpecialModelRenderer>> SPECIAL_MODEL_RENDERER_KEY = RegistryKey.ofRegistry(new Identifier("limlib/special_model_renderer"));
-	public static final Registry<SpecialModelRenderer> SPECIAL_MODEL_RENDERER = RegistriesAccessor.callRegisterSimple(SPECIAL_MODEL_RENDERER_KEY, Lifecycle.stable(),
+	public static final RegistryKey<Registry<SpecialModelRenderer>> SPECIAL_MODEL_RENDERER_KEY = RegistryKey
+		.ofRegistry(new Identifier("limlib/special_model_renderer"));
+	public static final Registry<SpecialModelRenderer> SPECIAL_MODEL_RENDERER = RegistriesAccessor
+		.callRegisterSimple(SPECIAL_MODEL_RENDERER_KEY, Lifecycle.stable(),
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	@ClientOnly
-	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta, ShaderProgram shader, BlockPos chunkOrigin);
+	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta,
+			ShaderProgram shader, BlockPos chunkOrigin);
 
 	@ClientOnly
 	public MutableQuad modifyQuad(MutableQuad quad) {

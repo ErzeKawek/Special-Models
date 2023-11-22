@@ -36,8 +36,8 @@ public abstract class JsonUnbakedModelMixin implements UnbakedModelAccess {
 	private Map<SpecialModelRenderer, Identifier> subModels = Maps.newHashMap();
 
 	@Inject(method = "Lnet/minecraft/client/render/model/json/JsonUnbakedModel;bake(Lnet/minecraft/client/render/model/ModelBaker;Lnet/minecraft/client/render/model/json/JsonUnbakedModel;Ljava/util/function/Function;Lnet/minecraft/client/render/model/ModelBakeSettings;Lnet/minecraft/util/Identifier;Z)Lnet/minecraft/client/render/model/BakedModel;", at = @At("RETURN"), cancellable = true)
-	private void specialModels$bake(ModelBaker loader, JsonUnbakedModel parent, Function<Material, Sprite> textureGetter, ModelBakeSettings settings, Identifier id, boolean hasDepth,
-			CallbackInfoReturnable<BakedModel> ci) {
+	private void specialModels$bake(ModelBaker loader, JsonUnbakedModel parent, Function<Material, Sprite> textureGetter,
+			ModelBakeSettings settings, Identifier id, boolean hasDepth, CallbackInfoReturnable<BakedModel> ci) {
 		this.getSubModels().forEach((modelRenderer, modelId) -> {
 
 			if (!modelId.equals(id)) {

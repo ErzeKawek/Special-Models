@@ -54,11 +54,13 @@ public interface WorldChunkBuilderAccess {
 
 	public void addSpecialBuiltChunk(SpecialChunkBuilder.BuiltChunk builtChunk);
 
-	public void updateSpecialBuiltChunks(LinkedHashSet<SpecialChunkBuilder.ChunkInfo> builtChunks, SpecialChunkBuilder.ChunkInfoListMap builtChunkMap, Vec3d cameraPos,
+	public void updateSpecialBuiltChunks(LinkedHashSet<SpecialChunkBuilder.ChunkInfo> builtChunks,
+			SpecialChunkBuilder.ChunkInfoListMap builtChunkMap, Vec3d cameraPos,
 			Queue<SpecialChunkBuilder.ChunkInfo> chunksToBuild, boolean chunkCullingEnabled);
 
 	@Nullable
-	public SpecialChunkBuilder.BuiltChunk getAdjacentSpecialChunk(BlockPos pos, SpecialChunkBuilder.BuiltChunk chunk, Direction direction);
+	public SpecialChunkBuilder.BuiltChunk getAdjacentSpecialChunk(BlockPos pos, SpecialChunkBuilder.BuiltChunk chunk,
+			Direction direction);
 
 	public boolean isSpecialChunkNearMaxViewDistance(BlockPos blockPos, SpecialChunkBuilder.BuiltChunk builtChunk);
 
