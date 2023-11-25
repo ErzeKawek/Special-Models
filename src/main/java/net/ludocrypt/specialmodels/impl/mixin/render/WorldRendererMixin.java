@@ -52,8 +52,10 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> {
 
 				if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
+
 					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer,
 						builtChunk.getOrigin().toImmutable());
+
 				}
 
 			});
@@ -67,7 +69,6 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
-			this.sortLayer(camera.getPos().getX(), camera.getPos().getY(), camera.getPos().getZ(), modelRenderer);
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();
@@ -107,6 +108,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 			RenderSystem.polygonOffset(0.0F, 0.0F);
 			RenderSystem.disablePolygonOffset();
 			RenderSystem.disableBlend();
+
 		}
 
 	}

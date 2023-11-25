@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialBufferBuilderStorage;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialBuiltChunkStorage;
@@ -102,12 +101,6 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 	private double lastSpecialCameraPitch = Double.MIN_VALUE;
 	@Unique
 	private double lastSpecialCameraYaw = Double.MIN_VALUE;
-	@Unique
-	private double lastSpecialSortX;
-	@Unique
-	private double lastSpecialSortY;
-	@Unique
-	private double lastSpecialSortZ;
 
 	@Inject(method = "setWorld", at = @At("TAIL"))
 	private void specialModels$setWorld(ClientWorld world, CallbackInfo ci) {
@@ -700,36 +693,6 @@ public class WorldRendererChunkMixin implements WorldChunkBuilderAccess {
 		}
 
 		this.client.getProfiler().pop();
-	}
-
-	@Override
-	public void sortLayer(double sortX, double sortY, double sortZ, SpecialModelRenderer modelRenderer) {
-		double d = sortX - this.lastSpecialSortX;
-		double e = sortY - this.lastSpecialSortY;
-		double f = sortZ - this.lastSpecialSortZ;
-
-		if (d * d + e * e + f * f > 1.0) {
-			int i = ChunkSectionPos.getSectionCoord(sortX);
-			int j = ChunkSectionPos.getSectionCoord(sortY);
-			int k = ChunkSectionPos.getSectionCoord(sortZ);
-			boolean bl = i != ChunkSectionPos.getSectionCoord(this.lastSpecialSortX) || k != ChunkSectionPos
-				.getSectionCoord(this.lastSpecialSortZ) || j != ChunkSectionPos.getSectionCoord(this.lastSpecialSortY);
-			this.lastSpecialSortX = sortX;
-			this.lastSpecialSortY = sortY;
-			this.lastSpecialSortZ = sortZ;
-			int l = 0;
-
-			for (ChunkInfo chunkInfo : this.specialChunkInfoList) {
-
-				if (l < 15 && (bl || chunkInfo.isAxisAlignedWith(i, j, k)) && chunkInfo.chunk
-					.scheduleSort(modelRenderer, this.specialChunkBuilder)) {
-					++l;
-				}
-
-			}
-
-		}
-
 	}
 
 	@Override
