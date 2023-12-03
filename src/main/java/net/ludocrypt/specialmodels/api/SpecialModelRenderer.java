@@ -14,6 +14,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.ShaderProgram;
 import net.minecraft.client.render.chunk.ChunkRenderRegion;
 import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -46,7 +47,7 @@ public abstract class SpecialModelRenderer {
 			ShaderProgram shader, BlockPos chunkOrigin);
 
 	public MutableQuad modifyQuad(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, BakedModel model,
-			long modelSeed, MutableQuad quad) {
+			BakedQuad quadIn, long modelSeed, MutableQuad quad) {
 		return quad;
 	}
 
