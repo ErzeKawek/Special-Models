@@ -79,7 +79,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Unique
 	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix,
 			SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
-		ShaderProgram shader = SpecialModels.LOADED_SHADERS.getOrDefault(modelRenderer, modelRenderer.fallback.get());
+		ShaderProgram shader = SpecialModels.LOADED_SHADERS
+			.getOrDefault(modelRenderer, client.gameRenderer.getShader(modelRenderer.fallback));
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
 

@@ -1,7 +1,5 @@
 package net.ludocrypt.specialmodels.api;
 
-import java.util.function.Supplier;
-
 import org.joml.Matrix4f;
 import org.quiltmc.loader.api.minecraft.ClientOnly;
 
@@ -30,16 +28,14 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	public final boolean performOutside;
-
-	@ClientOnly
-	public final Supplier<ShaderProgram> fallback;
+	public final String fallback;
 
 	public SpecialModelRenderer() {
 		this.performOutside = true;
-		this.fallback = () -> null;
+		this.fallback = "";
 	}
 
-	public SpecialModelRenderer(Supplier<ShaderProgram> fallback) {
+	public SpecialModelRenderer(String fallback) {
 		this.performOutside = false;
 		this.fallback = fallback;
 	}
