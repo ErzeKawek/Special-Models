@@ -21,7 +21,6 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-@ClientOnly
 public abstract class SpecialModelRenderer {
 
 	public static final RegistryKey<Registry<SpecialModelRenderer>> SPECIAL_MODEL_RENDERER_KEY = RegistryKey
@@ -31,6 +30,8 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	public final boolean performOutside;
+
+	@ClientOnly
 	public final Supplier<ShaderProgram> fallback;
 
 	public SpecialModelRenderer() {
@@ -43,22 +44,27 @@ public abstract class SpecialModelRenderer {
 		this.fallback = fallback;
 	}
 
+	@ClientOnly
 	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta,
 			ShaderProgram shader, BlockPos chunkOrigin);
 
+	@ClientOnly
 	public MutableQuad modifyQuad(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, BakedModel model,
 			BakedQuad quadIn, long modelSeed, MutableQuad quad) {
 		return quad;
 	}
 
+	@ClientOnly
 	public Matrix4f positionMatrix(Matrix4f in) {
 		return in;
 	}
 
+	@ClientOnly
 	public Matrix4f viewMatrix(Matrix4f in) {
 		return in;
 	}
 
+	@ClientOnly
 	public Vec4b appendState(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, BakedModel model,
 			long modelSeed) {
 		return new Vec4b(0, 0, 0, 0);

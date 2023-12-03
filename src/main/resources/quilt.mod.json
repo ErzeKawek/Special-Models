@@ -20,7 +20,7 @@
 		},
 		"intermediate_mappings": "net.fabricmc:intermediary",
 		"entrypoints": {
-			"client_init": "net.ludocrypt.specialmodels.impl.SpecialModels"
+			"init": "net.ludocrypt.specialmodels.impl.SpecialModels"
 		},
 		"depends": [
 		]
