@@ -306,11 +306,11 @@ public class SpecialChunkBuilder {
 
 		public static final int SIZE = 16;
 		public final int index;
-		public final AtomicReference<SpecialChunkBuilder.ChunkData> data = new AtomicReference<SpecialChunkBuilder.ChunkData>(
-			SpecialChunkBuilder.ChunkData.EMPTY);
+		public final AtomicReference<ChunkData> data = new AtomicReference<ChunkData>(ChunkData.EMPTY);
 		final AtomicInteger cancelledInitialBuilds = new AtomicInteger(0);
 		@Nullable
-		private SpecialChunkBuilder.BuiltChunk.RebuildTask rebuildTask;
+		private RebuildTask rebuildTask;
+		public final Map<SpecialModelRenderer, SortTask> sortTasks = new Reference2ObjectArrayMap<>();
 		private Box boundingBox;
 		private boolean needsRebuild = true;
 		final BlockPos.Mutable origin = new BlockPos.Mutable(-1, -1, -1);
@@ -429,6 +429,24 @@ public class SpecialChunkBuilder {
 			return this.neighborPositions[direction.ordinal()];
 		}
 
+		public boolean scheduleSort(SpecialModelRenderer renderer, SpecialChunkBuilder chunkRenderer) {
+			ChunkData chunkData = this.getData();
+
+			if (this.sortTasks.containsKey(renderer)) {
+				this.sortTasks.get(renderer).cancel();
+			}
+
+			if (chunkData.isEmpty(renderer)) {
+				return false;
+			} else {
+				SortTask task = new SortTask(this.getSquaredCameraDistance(), chunkData, renderer);
+				this.sortTasks.put(renderer, task);
+				chunkRenderer.send(task);
+				return true;
+			}
+
+		}
+
 		protected boolean cancel() {
 			boolean bl = false;
 
@@ -437,6 +455,9 @@ public class SpecialChunkBuilder {
 				this.rebuildTask = null;
 				bl = true;
 			}
+
+			this.sortTasks.forEach((renderer, task) -> task.cancel());
+			this.sortTasks.clear();
 
 			return bl;
 		}
@@ -508,7 +529,8 @@ public class SpecialChunkBuilder {
 					} else {
 						SpecialChunkBuilder.ChunkData chunkData = new SpecialChunkBuilder.ChunkData();
 						chunkData.occlusionGraph = renderedChunkData.occlusionGraph;
-						chunkData.bufferState = renderedChunkData.bufferState;
+						chunkData.bufferStates.clear();
+						chunkData.bufferStates.putAll(renderedChunkData.bufferStates);
 						List<CompletableFuture<Void>> list = Lists.newArrayList();
 						renderedChunkData.renderedBuffers.forEach((modelRenderer, renderedBuffer) -> {
 
@@ -586,8 +608,8 @@ public class SpecialChunkBuilder {
 									long modelSeed = state.getRenderingSeed(pos);
 									BufferBuilder buffer = buffers.get(modelRenderer);
 									((StateBufferBuilderAccess) buffer)
-										.setStateAccessor(
-											() -> modelRenderer.appendState(chunkRenderRegion, pos, state, modelSeed));
+										.setStateAccessor(() -> modelRenderer
+											.appendState(chunkRenderRegion, pos, state, model, modelSeed));
 
 									if (!buffer.isBuilding()) {
 										buffer
@@ -599,7 +621,7 @@ public class SpecialChunkBuilder {
 									constructedModel
 										.setFunction((quads, blockState, direction, random) -> quads
 											.stream()
-											.map((quad) -> reconstructBakedQuad(quad, modelRenderer))
+											.map((quad) -> reconstructBakedQuad(model, quad, modelRenderer))
 											.toList());
 									blockRenderManager
 										.getModelRenderer()
@@ -622,7 +644,7 @@ public class SpecialChunkBuilder {
 								.setQuadSorting(VertexSorting
 									.byDistanceSquared(cameraX - originPos.getX(), cameraY - originPos.getY(),
 										cameraZ - originPos.getZ()));
-							renderedChunkData.bufferState = bufferBuilder.popState();
+							renderedChunkData.bufferStates.put(modelRenderer, bufferBuilder.popState());
 						}
 
 						if (!bufferBuilder.isBuilding()) {
@@ -646,7 +668,7 @@ public class SpecialChunkBuilder {
 				return renderedChunkData;
 			}
 
-			private BakedQuad reconstructBakedQuad(BakedQuad quad, SpecialModelRenderer modelRenderer) {
+			private BakedQuad reconstructBakedQuad(BakedModel model, BakedQuad quad, SpecialModelRenderer modelRenderer) {
 				int[] vertexData = quad.getVertexData();
 				int vertexDataLength = 8;
 
@@ -688,7 +710,7 @@ public class SpecialChunkBuilder {
 					float u4 = byteBuffer.getFloat(16);
 					float v4 = byteBuffer.getFloat(20);
 					MutableQuad mutableQuad = modelRenderer
-						.modifyQuad(
+						.modifyQuad(model,
 							new MutableQuad(new MutableVertice(x1, y1, z1, u1, v1), new MutableVertice(x2, y2, z2, u2, v2),
 								new MutableVertice(x3, y3, z3, u3, v3), new MutableVertice(x4, y4, z4, u4, v4)));
 					uvIndex = 0;
@@ -751,8 +773,7 @@ public class SpecialChunkBuilder {
 
 				public final Map<SpecialModelRenderer, BufferBuilder.RenderedBuffer> renderedBuffers = new Reference2ObjectArrayMap<>();
 				public ChunkOcclusionData occlusionGraph = new ChunkOcclusionData();
-				@Nullable
-				public BufferBuilder.SortState bufferState;
+				public final Map<SpecialModelRenderer, BufferBuilder.SortState> bufferStates = new Reference2ObjectArrayMap<>();
 
 				RenderedChunkData() {
 				}
@@ -777,6 +798,85 @@ public class SpecialChunkBuilder {
 					return function.apply(super.getQuads(blockState, face, rand), blockState, face, rand);
 				}
 
+			}
+
+		}
+
+		class SortTask extends SpecialChunkBuilder.BuiltChunk.Task {
+
+			private final SpecialChunkBuilder.ChunkData data;
+			private final SpecialModelRenderer renderer;
+
+			public SortTask(double distance, SpecialChunkBuilder.ChunkData data, SpecialModelRenderer renderer) {
+				super(distance, true);
+				this.data = data;
+				this.renderer = renderer;
+			}
+
+			@Override
+			protected String name() {
+				return "rend_chk_sort";
+			}
+
+			@Override
+			public CompletableFuture<SpecialChunkBuilder.Result> run(SpecialBufferBuilderStorage buffers) {
+
+				if (this.cancelled.get()) {
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else if (!BuiltChunk.this.shouldBuild()) {
+					this.cancelled.set(true);
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else if (this.cancelled.get()) {
+					return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+				} else {
+					Vec3d vec3d = SpecialChunkBuilder.this.getCameraPosition();
+					float f = (float) vec3d.x;
+					float g = (float) vec3d.y;
+					float h = (float) vec3d.z;
+
+					if (this.data.bufferStates.containsKey(renderer) && !this.data.isEmpty(renderer)) {
+						BufferBuilder.SortState sortState = this.data.bufferStates.get(renderer);
+						BufferBuilder bufferBuilder = buffers.get(renderer);
+						BuiltChunk.this.beginBufferBuilding(bufferBuilder);
+						bufferBuilder.restoreState(sortState);
+						bufferBuilder
+							.setQuadSorting(VertexSorting
+								.byDistanceSquared(f - (float) BuiltChunk.this.origin.getX(),
+									g - (float) BuiltChunk.this.origin.getY(), h - (float) BuiltChunk.this.origin.getZ()));
+						this.data.bufferStates.put(renderer, bufferBuilder.popState());
+						BufferBuilder.RenderedBuffer renderedBuffer = bufferBuilder.end();
+
+						if (this.cancelled.get()) {
+							renderedBuffer.release();
+							return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+						} else {
+							CompletableFuture<SpecialChunkBuilder.Result> completableFuture = SpecialChunkBuilder.this
+								.scheduleUpload(renderer, renderedBuffer, BuiltChunk.this.getBuffer(renderer))
+								.thenApply(v -> SpecialChunkBuilder.Result.CANCELLED);
+							return completableFuture.handle((result, throwable) -> {
+
+								if (throwable != null && !(throwable instanceof CancellationException) && !(throwable instanceof InterruptedException)) {
+									MinecraftClient
+										.getInstance()
+										.setCrashReport(CrashReport.create(throwable, "Rendering chunk"));
+								}
+
+								return this.cancelled.get() ? SpecialChunkBuilder.Result.CANCELLED
+										: SpecialChunkBuilder.Result.SUCCESSFUL;
+							});
+						}
+
+					} else {
+						return CompletableFuture.completedFuture(SpecialChunkBuilder.Result.CANCELLED);
+					}
+
+				}
+
+			}
+
+			@Override
+			public void cancel() {
+				this.cancelled.set(true);
 			}
 
 		}
@@ -818,8 +918,7 @@ public class SpecialChunkBuilder {
 		};
 		public final Map<SpecialModelRenderer, BufferBuilder.RenderedBuffer> renderedBuffers = new Reference2ObjectArrayMap<>();
 		public ChunkOcclusionData occlusionGraph = new ChunkOcclusionData();
-		@Nullable
-		public BufferBuilder.SortState bufferState;
+		public final Map<SpecialModelRenderer, BufferBuilder.SortState> bufferStates = new Reference2ObjectArrayMap<>();
 
 		public boolean isEmpty() {
 			return this.renderedBuffers.isEmpty();

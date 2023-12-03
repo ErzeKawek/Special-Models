@@ -1,5 +1,7 @@
 package net.ludocrypt.specialmodels.api;
 
+import java.util.function.Supplier;
+
 import org.joml.Matrix4f;
 import org.quiltmc.loader.api.minecraft.ClientOnly;
 
@@ -17,6 +19,14 @@ public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 	public static final SpecialModelRenderer TEXTURED = Registry
 		.register(SpecialModelRenderer.SPECIAL_MODEL_RENDERER, new Identifier("specialmodels", "textured"),
 			new TexturedSpecialModelRenderer());
+
+	public TexturedSpecialModelRenderer() {
+		super();
+	}
+
+	public TexturedSpecialModelRenderer(Supplier<ShaderProgram> fallback) {
+		super(fallback);
+	}
 
 	@Override
 	@ClientOnly

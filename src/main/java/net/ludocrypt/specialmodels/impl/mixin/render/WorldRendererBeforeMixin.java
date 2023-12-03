@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -71,7 +72,35 @@ public abstract class WorldRendererBeforeMixin implements WorldRendererAccess, W
 
 		this.setupSpecialTerrain(camera, frustum, this.capturedFrustum != null, this.client.player.isSpectator());
 		this.findSpecialChunksToRebuild(camera);
-		this.render(matrices, positionMatrix, tickDelta, camera);
+		this.render(matrices, positionMatrix, tickDelta, camera, true);
+	}
+
+	@Inject(method = "Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;FJZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lorg/joml/Matrix4f;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw(Lnet/minecraft/client/render/RenderLayer;)V", ordinal = 0, shift = Shift.BEFORE))
+	private void specialModels$render$drawLayer$inside(MatrixStack matrices, float tickDelta, long limitTime,
+			boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
+			LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
+		Frustum frustum;
+
+		if (this.capturedFrustum != null) {
+			frustum = this.capturedFrustum;
+			frustum
+				.setPosition(this.capturedFrustumPosition.x, this.capturedFrustumPosition.y, this.capturedFrustumPosition.z);
+		} else {
+			frustum = this.frustum;
+		}
+
+		if (this.shouldCaptureFrustum) {
+			Matrix4f matrix4f2 = matrices.peek().getModel();
+			Vec3d vec3d = camera.getPos();
+			this
+				.captureFrustum(matrix4f2, positionMatrix, vec3d.x, vec3d.y, vec3d.z,
+					this.capturedFrustum != null ? new Frustum(matrix4f2, positionMatrix) : frustum);
+			this.shouldCaptureFrustum = false;
+		}
+
+		this.setupSpecialTerrain(camera, frustum, this.capturedFrustum != null, this.client.player.isSpectator());
+		this.findSpecialChunksToRebuild(camera);
+		this.render(matrices, positionMatrix, tickDelta, camera, false);
 	}
 
 	@Shadow

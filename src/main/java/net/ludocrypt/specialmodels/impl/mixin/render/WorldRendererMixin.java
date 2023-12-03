@@ -15,7 +15,8 @@ import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.SpecialModels;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
 import net.ludocrypt.specialmodels.impl.access.WorldRendererAccess;
-import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder;
+import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder.BuiltChunk;
+import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder.ChunkInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
@@ -26,6 +27,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkSectionPos;
 
 @Mixin(value = WorldRenderer.class, priority = 900)
 public abstract class WorldRendererMixin implements WorldRendererAccess, WorldChunkBuilderAccess {
@@ -39,22 +41,33 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Final
 	private BufferBuilderStorage bufferBuilders;
 
-	@Override
-	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera) {
+	@Unique
+	private double lastSpecialSortX;
+	@Unique
+	private double lastSpecialSortY;
+	@Unique
+	private double lastSpecialSortZ;
 
-		ObjectListIterator<SpecialChunkBuilder.ChunkInfo> chunkInfos = this
+	@Override
+	public void render(MatrixStack matrices, Matrix4f positionMatrix, float tickDelta, Camera camera, boolean outside) {
+
+		ObjectListIterator<ChunkInfo> chunkInfos = this
 			.getSpecialChunkInfoList()
 			.listIterator(this.getSpecialChunkInfoList().size());
 
 		while (chunkInfos.hasPrevious()) {
-			SpecialChunkBuilder.ChunkInfo chunkInfo = chunkInfos.previous();
-			SpecialChunkBuilder.BuiltChunk builtChunk = chunkInfo.chunk;
+			ChunkInfo chunkInfo = chunkInfos.previous();
+			BuiltChunk builtChunk = chunkInfo.chunk;
 			builtChunk.getSpecialModelBuffers().forEach((modelRenderer, vertexBuffer) -> {
 
-				if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
+				if (modelRenderer.performOutside == outside) {
 
-					specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer,
-						builtChunk.getOrigin().toImmutable());
+					if (builtChunk.getData().renderedBuffers.containsKey(modelRenderer)) {
+
+						specialModels$renderBuffer(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer,
+							builtChunk.getOrigin().toImmutable());
+
+					}
 
 				}
 
@@ -66,9 +79,39 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Unique
 	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix,
 			SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
-		ShaderProgram shader = SpecialModels.LOADED_SHADERS.get(modelRenderer);
+		ShaderProgram shader = SpecialModels.LOADED_SHADERS.getOrDefault(modelRenderer, modelRenderer.fallback.get());
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
+
+			this.client.getProfiler().push("translucent_sort");
+			double d = camera.getPos().getX() - this.lastSpecialSortX;
+			double e = camera.getPos().getY() - this.lastSpecialSortY;
+			double f = camera.getPos().getZ() - this.lastSpecialSortZ;
+
+			if (d * d + e * e + f * f > 1.0) {
+				int i = ChunkSectionPos.getSectionCoord(camera.getPos().getX());
+				int j = ChunkSectionPos.getSectionCoord(camera.getPos().getY());
+				int k = ChunkSectionPos.getSectionCoord(camera.getPos().getZ());
+				boolean bl = i != ChunkSectionPos.getSectionCoord(this.lastSpecialSortX) || k != ChunkSectionPos
+					.getSectionCoord(this.lastSpecialSortZ) || j != ChunkSectionPos.getSectionCoord(this.lastSpecialSortY);
+				this.lastSpecialSortX = camera.getPos().getX();
+				this.lastSpecialSortY = camera.getPos().getY();
+				this.lastSpecialSortZ = camera.getPos().getZ();
+				int l = 0;
+
+				for (ChunkInfo chunkInfo : this.getSpecialChunkInfoList()) {
+
+					if (l < 15 && (bl || chunkInfo.isAxisAlignedWith(i, j, k)) && chunkInfo.chunk
+						.scheduleSort(modelRenderer, this.getSpecialChunkBuilder())) {
+						++l;
+					}
+
+				}
+
+			}
+
+			this.client.getProfiler().pop();
+
 			RenderSystem.depthMask(true);
 			RenderSystem.enableBlend();
 			RenderSystem.enableDepthTest();

@@ -37,13 +37,18 @@ public class GameRendererMixin {
 			.map(RegistryKey::getValue)
 			.forEach((id) -> {
 
+				SpecialModelRenderer renderer = SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(id);
+
+				if (!renderer.performOutside) {
+					return;
+				}
+
 				try {
 					list2
 						.add(Pair
 							.of(new ShaderProgram(manager, "rendertype_" + id.getNamespace() + "_" + id.getPath(),
 								SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE),
-								(shader) -> SpecialModels.LOADED_SHADERS
-									.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(id), shader)));
+								(shader) -> SpecialModels.LOADED_SHADERS.put(renderer, shader)));
 				} catch (IOException e) {
 					SpecialModels.LOGGER.error("Could not reload shader: {}", id);
 					e.printStackTrace();
@@ -53,8 +58,7 @@ public class GameRendererMixin {
 							.add(Pair
 								.of(new ShaderProgram(manager, "rendertype_specialmodels_textured",
 									SpecialVertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL_STATE),
-									(shader) -> SpecialModels.LOADED_SHADERS
-										.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(id), shader)));
+									(shader) -> SpecialModels.LOADED_SHADERS.put(renderer, shader)));
 					} catch (IOException e2) {
 						list2.forEach((pair) -> pair.getFirst().close());
 						e2.printStackTrace();
