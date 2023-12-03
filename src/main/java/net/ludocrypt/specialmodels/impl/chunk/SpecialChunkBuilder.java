@@ -621,7 +621,8 @@ public class SpecialChunkBuilder {
 									constructedModel
 										.setFunction((quads, blockState, direction, random) -> quads
 											.stream()
-											.map((quad) -> reconstructBakedQuad(model, quad, modelRenderer))
+											.map((quad) -> reconstructBakedQuad(chunkRenderRegion, pos, state, model,
+												modelSeed, quad, modelRenderer))
 											.toList());
 									blockRenderManager
 										.getModelRenderer()
@@ -668,7 +669,8 @@ public class SpecialChunkBuilder {
 				return renderedChunkData;
 			}
 
-			private BakedQuad reconstructBakedQuad(BakedModel model, BakedQuad quad, SpecialModelRenderer modelRenderer) {
+			private BakedQuad reconstructBakedQuad(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state,
+					BakedModel model, long modelSeed, BakedQuad quad, SpecialModelRenderer modelRenderer) {
 				int[] vertexData = quad.getVertexData();
 				int vertexDataLength = 8;
 
@@ -710,7 +712,7 @@ public class SpecialChunkBuilder {
 					float u4 = byteBuffer.getFloat(16);
 					float v4 = byteBuffer.getFloat(20);
 					MutableQuad mutableQuad = modelRenderer
-						.modifyQuad(model,
+						.modifyQuad(chunkRenderRegion, pos, state, model, modelSeed,
 							new MutableQuad(new MutableVertice(x1, y1, z1, u1, v1), new MutableVertice(x2, y2, z2, u2, v2),
 								new MutableVertice(x3, y3, z3, u3, v3), new MutableVertice(x4, y4, z4, u4, v4)));
 					uvIndex = 0;

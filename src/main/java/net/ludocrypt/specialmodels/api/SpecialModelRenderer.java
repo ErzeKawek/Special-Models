@@ -45,7 +45,8 @@ public abstract class SpecialModelRenderer {
 	public abstract void setup(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f positionMatrix, float tickDelta,
 			ShaderProgram shader, BlockPos chunkOrigin);
 
-	public MutableQuad modifyQuad(BakedModel model, MutableQuad quad) {
+	public MutableQuad modifyQuad(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, BakedModel model,
+			long modelSeed, MutableQuad quad) {
 		return quad;
 	}
 
