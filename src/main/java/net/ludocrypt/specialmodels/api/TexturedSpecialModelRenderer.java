@@ -22,8 +22,8 @@ public class TexturedSpecialModelRenderer extends SpecialModelRenderer {
 		super();
 	}
 
-	public TexturedSpecialModelRenderer(String fallback) {
-		super(fallback);
+	public TexturedSpecialModelRenderer(boolean performOutside) {
+		super(performOutside);
 	}
 
 	@Override

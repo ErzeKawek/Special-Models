@@ -12,7 +12,6 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
-import net.ludocrypt.specialmodels.impl.SpecialModels;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
 import net.ludocrypt.specialmodels.impl.access.WorldRendererAccess;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder.BuiltChunk;
@@ -79,8 +78,7 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Unique
 	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix,
 			SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
-		ShaderProgram shader = SpecialModels.LOADED_SHADERS
-			.getOrDefault(modelRenderer, client.gameRenderer.getShader(modelRenderer.fallback));
+		ShaderProgram shader = modelRenderer.getShaderProgram(matrices, tickDelta);
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
 

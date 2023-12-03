@@ -5,6 +5,7 @@ import org.quiltmc.loader.api.minecraft.ClientOnly;
 
 import com.mojang.serialization.Lifecycle;
 
+import net.ludocrypt.specialmodels.impl.SpecialModels;
 import net.ludocrypt.specialmodels.impl.mixin.registry.RegistriesAccessor;
 import net.ludocrypt.specialmodels.impl.render.MutableQuad;
 import net.ludocrypt.specialmodels.impl.render.Vec4b;
@@ -28,16 +29,13 @@ public abstract class SpecialModelRenderer {
 			registry -> TexturedSpecialModelRenderer.TEXTURED);
 
 	public final boolean performOutside;
-	public final String fallback;
 
 	public SpecialModelRenderer() {
 		this.performOutside = true;
-		this.fallback = "";
 	}
 
-	public SpecialModelRenderer(String fallback) {
-		this.performOutside = false;
-		this.fallback = fallback;
+	public SpecialModelRenderer(boolean performOutside) {
+		this.performOutside = performOutside;
 	}
 
 	@ClientOnly
@@ -64,6 +62,11 @@ public abstract class SpecialModelRenderer {
 	public Vec4b appendState(ChunkRenderRegion chunkRenderRegion, BlockPos pos, BlockState state, BakedModel model,
 			long modelSeed) {
 		return new Vec4b(0, 0, 0, 0);
+	}
+
+	@ClientOnly
+	public ShaderProgram getShaderProgram(MatrixStack matrices, float tickDelta) {
+		return SpecialModels.LOADED_SHADERS.get(this);
 	}
 
 }

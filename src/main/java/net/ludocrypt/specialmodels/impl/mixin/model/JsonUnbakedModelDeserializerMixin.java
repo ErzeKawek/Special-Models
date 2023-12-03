@@ -17,6 +17,7 @@ import com.google.gson.JsonObject;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.access.UnbakedModelAccess;
 import net.minecraft.client.render.model.json.JsonUnbakedModel;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 
 @Mixin(JsonUnbakedModel.Deserializer.class)
@@ -32,9 +33,15 @@ public abstract class JsonUnbakedModelDeserializerMixin {
 			JsonObject limlibExtra = jsonObject.get("specialmodels").getAsJsonObject();
 
 			for (Entry<String, JsonElement> entry : limlibExtra.entrySet()) {
-				map
-					.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(new Identifier(entry.getKey())),
-						new Identifier(entry.getValue().getAsString()));
+
+				if (SpecialModelRenderer.SPECIAL_MODEL_RENDERER
+					.contains(
+						RegistryKey.of(SpecialModelRenderer.SPECIAL_MODEL_RENDERER_KEY, new Identifier(entry.getKey())))) {
+					map
+						.put(SpecialModelRenderer.SPECIAL_MODEL_RENDERER.get(new Identifier(entry.getKey())),
+							new Identifier(entry.getValue().getAsString()));
+				}
+
 			}
 
 		}
