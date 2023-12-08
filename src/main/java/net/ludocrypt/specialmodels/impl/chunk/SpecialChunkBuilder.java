@@ -624,6 +624,18 @@ public class SpecialChunkBuilder {
 							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) blockRenderManager
 								.getModel(state)).getModels(state);
 
+							BakedModel forward = blockRenderManager.getModel(state);
+
+							while (models.isEmpty() && forward instanceof ForwardingBakedModel) {
+
+								if (((ForwardingBakedModel) forward).getWrappedModel() != null) {
+									models = ((BakedModelAccess) ((ForwardingBakedModel) forward).getWrappedModel())
+										.getModels(state);
+									forward = ((ForwardingBakedModel) forward).getWrappedModel();
+								}
+
+							}
+
 							if (!models.isEmpty()) {
 
 								for (Pair<SpecialModelRenderer, BakedModel> pair : models) {
