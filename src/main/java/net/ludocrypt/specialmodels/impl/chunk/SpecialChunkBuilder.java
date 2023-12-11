@@ -34,6 +34,7 @@ import com.mojang.logging.LogUtils;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.model.WrapperBakedModel;
 import net.ludocrypt.specialmodels.api.SpecialModelRenderer;
 import net.ludocrypt.specialmodels.impl.access.BakedModelAccess;
 import net.ludocrypt.specialmodels.impl.access.WorldChunkBuilderAccess;
@@ -621,20 +622,8 @@ public class SpecialChunkBuilder {
 							matrixStack.push();
 							matrixStack
 								.translate((float) (pos.getX() & 15), (float) (pos.getY() & 15), (float) (pos.getZ() & 15));
-							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) blockRenderManager
-								.getModel(state)).getModels(state);
-
-							BakedModel forward = blockRenderManager.getModel(state);
-
-							while (models.isEmpty() && forward instanceof ForwardingBakedModel) {
-
-								if (((ForwardingBakedModel) forward).getWrappedModel() != null) {
-									models = ((BakedModelAccess) ((ForwardingBakedModel) forward).getWrappedModel())
-										.getModels(state);
-									forward = ((ForwardingBakedModel) forward).getWrappedModel();
-								}
-
-							}
+							List<Pair<SpecialModelRenderer, BakedModel>> models = ((BakedModelAccess) WrapperBakedModel
+								.unwrap(blockRenderManager.getModel(state))).getModels(state);
 
 							if (!models.isEmpty()) {
 
