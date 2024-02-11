@@ -1,11 +1,13 @@
 package net.ludocrypt.specialmodels.impl.mixin.render;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
+import com.mojang.blaze3d.framebuffer.Framebuffer;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexBuffer;
@@ -17,7 +19,6 @@ import net.ludocrypt.specialmodels.impl.access.WorldRendererAccess;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder.BuiltChunk;
 import net.ludocrypt.specialmodels.impl.chunk.SpecialChunkBuilder.ChunkInfo;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.ShaderProgram;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -36,9 +37,10 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	private MinecraftClient client;
 	@Shadow
 	private ClientWorld world;
+
 	@Shadow
-	@Final
-	private BufferBuilderStorage bufferBuilders;
+	@Nullable
+	private Framebuffer translucentFramebuffer;
 
 	@Unique
 	private double lastSpecialSortX;
@@ -78,7 +80,8 @@ public abstract class WorldRendererMixin implements WorldRendererAccess, WorldCh
 	@Unique
 	public void specialModels$renderBuffer(MatrixStack matrices, float tickDelta, Camera camera, Matrix4f positionMatrix,
 			SpecialModelRenderer modelRenderer, VertexBuffer vertexBuffer, BlockPos origin) {
-		ShaderProgram shader = modelRenderer.getShaderProgram(matrices, tickDelta);
+		ShaderProgram shader = modelRenderer
+			.getShaderProgram(matrices, tickDelta, camera, positionMatrix, modelRenderer, vertexBuffer, origin);
 
 		if (shader != null && ((VertexBufferAccessor) vertexBuffer).getIndexCount() > 0) {
 
