@@ -14,7 +14,7 @@ public class IrisBridge {
 		if (IRIS_LOADED) {
 
 			try {
-				Class<?> irisApi = Class.forName("net.coderbot.iris.apiimpl.IrisApiV0Impl");
+				Class<?> irisApi = Class.forName("net.irisshaders.iris.apiimpl.IrisApiV0Impl");
 				Field irisInstance = irisApi.getField("INSTANCE");
 				Method isShaderInUse = irisApi.getMethod("isShaderPackInUse", new Class[0]);
 				Object areThey = isShaderInUse.invoke(irisInstance.get(null), new Object[0]);
