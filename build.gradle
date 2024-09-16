@@ -7,51 +7,48 @@ base.archivesName = project.archives_base_name
 version = "$project.version+${libs.versions.minecraft.get()}"
 group = project.maven_group
 
-loom {
-	accessWidenerPath = file("src/main/resources/specialmodels.accesswidener")
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
 }
 
 dependencies {
-	minecraft libs.minecraft
-	mappings variantOf(libs.quilt.mappings) { classifier 'intermediary-v2' }
-	modImplementation libs.quilt.loader
-	modImplementation libs.quilted.fabric.api
-}
-
-processResources {
-	inputs.property 'version', version
-
-	filesMatching('quilt.mod.json') {
-		expand "version": version
-	}
+    minecraft 'net.minecraftforge:forge:1.20.1-47.3.0'
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = 'UTF-8'
-	it.options.release = 17
-}
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
-
-	withSourcesJar()
-}
-
-jar {
-	from('LICENSE') {
-		rename { "${it}_${base.archivesName.get()}" }
-	}
-}
-
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-		}
-	}
-
-	repositories {
-
-	}
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
